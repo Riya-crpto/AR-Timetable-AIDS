@@ -351,7 +351,7 @@
             // Auto redirect to HTTPS if user is on insecure HTTP
             if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
                 toast.innerText = 'Redirecting to secure HTTPS for camera access...';
-                location.href = 'https://instructors-accurate-reputation-golf.trycloudflare.com';
+                location.href = location.href.replace('http:', 'https:');
                 return;
             }
 
@@ -360,7 +360,7 @@
                 camBannerMsg.innerHTML = '⚠️ Mobile Chrome disables camera over unencrypted HTTP. Tap below to open the secure HTTPS link:';
                 document.getElementById('enable-cam-btn').innerText = 'Switch to Secure HTTPS Link';
                 document.getElementById('enable-cam-btn').onclick = () => {
-                    location.href = 'https://instructors-accurate-reputation-golf.trycloudflare.com';
+                    location.href = location.href.replace('http:', 'https:');
                 };
                 return;
             }
