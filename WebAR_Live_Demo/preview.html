@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Marker-Based 3D AR Timetable // Live 3D Hologram Viewer</title>
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #f8fafc;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Top HUD */
+        .hud-top {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+        .status-pill {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 24px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.85); opacity: 0.5; }
+        }
+        .status-text {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+        }
+
+        .btn-pill {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 20px;
+            color: #38bdf8;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-pill:active {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        /* Bottom Controls */
+        .hud-bottom {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .hint-text {
+            color: rgba(148, 163, 184, 0.9);
+            font-size: 12.5px;
+            font-weight: 500;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+        .day-tabs {
+            pointer-events: auto;
+            display: flex;
+            gap: 6px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            padding: 5px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        .day-tab {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .day-tab.active {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5);
+        }
+        .controls-row {
+            pointer-events: auto;
+            display: flex;
+            gap: 10px;
+        }
+        .control-btn {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 20px;
+            color: #38bdf8;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-card {
+            background: #0f172a;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 20px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+        }
+        .modal-title {
+            font-size: 18px;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .modal-body {
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 18px;
+        }
+        .modal-close {
+            width: 100%;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <!-- Top HUD -->
+    <div class="hud-top">
+        <div class="status-pill">
+            <div class="status-dot"></div>
+            <span class="status-text">3D AR TIMETABLE // LIVE MODEL</span>
+        </div>
+        <button class="btn-pill" onclick="toggleModal(true)">&#9432; Details</button>
+    </div>
+
+    <!-- Bottom HUD -->
+    <div class="hud-bottom">
+        <div class="hint-text">&#128070; Drag with mouse or touch to rotate 3D board | Pinch / scroll to zoom</div>
+        <div class="day-tabs">
+            <div class="day-tab" id="tab-0" onclick="selectDay(0)">MON</div>
+            <div class="day-tab" id="tab-1" onclick="selectDay(1)">TUE</div>
+            <div class="day-tab" id="tab-2" onclick="selectDay(2)">WED</div>
+            <div class="day-tab" id="tab-3" onclick="selectDay(3)">THU</div>
+            <div class="day-tab" id="tab-4" onclick="selectDay(4)">FRI</div>
+        </div>
+        <div class="controls-row">
+            <button class="control-btn" onclick="resetCamera()">&#8634; Reset View</button>
+            <button class="control-btn" onclick="toggleLevitation()">&#9776; Toggle Levitation</button>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-card">
+            <h2 class="modal-title">Marker-Based 3D AR Timetable</h2>
+            <div class="modal-body">
+                <strong>Project:</strong> College AR Timetable<br>
+                <strong>Architecture:</strong> Unity 2022.3 LTS, AR Foundation 5.1.5, Google ARCore<br>
+                <strong>Features:</strong> 3D cyber metallic chassis, pulsating neon emission bezels, frosted acrylic glass plate, active day highlights, and camera marker tracking.<br><br>
+                This interactive 3D viewer lets you inspect the complete 3D model, materials, and layout with full 360&deg; orbit control.
+            </div>
+            <button class="modal-close" onclick="toggleModal(false)">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020617, 0.08);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0.2, 3.6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 6.0;
+        controls.minDistance = 1.2;
+        controls.maxPolarAngle = Math.PI / 1.7;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.2);
+        scene.add(ambientLight);
+
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.4);
+        dirLight1.position.set(2, 4, 3);
+        scene.add(dirLight1);
+
+        const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.8);
+        dirLight2.position.set(-2, -2, 2);
+        scene.add(dirLight2);
+
+        // 3D Timetable Board Root Group
+        const boardGroup = new THREE.Group();
+        scene.add(boardGroup);
+
+        // Texture Loader
+        const textureLoader = new THREE.TextureLoader();
+        const timetableTex = textureLoader.load('Timetable_College.png', () => {
+            renderer.render(scene, camera);
+        });
+        timetableTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        // 1. Cyber Metallic Chassis (Backplate)
+        const chassisGeo = new THREE.BoxGeometry(2.35, 1.95, 0.04);
+        const chassisMat = new THREE.MeshStandardMaterial({
+            color: 0x0f172a,
+            metalness: 0.85,
+            roughness: 0.25
+        });
+        const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+        chassis.position.z = -0.025;
+        boardGroup.add(chassis);
+
+        // 2. Glowing Neon Border Accent
+        const neonGeo = new THREE.BoxGeometry(2.28, 1.88, 0.02);
+        const neonMat = new THREE.MeshStandardMaterial({
+            color: 0x00e5ff,
+            emissive: 0x00d4ff,
+            emissiveIntensity: 0.85,
+            metalness: 0.2,
+            roughness: 0.1
+        });
+        const neon = new THREE.Mesh(neonGeo, neonMat);
+        neon.position.z = -0.01;
+        boardGroup.add(neon);
+
+        // 3. Frosted Acrylic Glass Layer
+        const glassGeo = new THREE.BoxGeometry(2.22, 1.82, 0.01);
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0x032b43,
+            transmission: 0.7,
+            opacity: 0.85,
+            transparent: true,
+            roughness: 0.15,
+            metalness: 0.1
+        });
+        const glass = new THREE.Mesh(glassGeo, glassMat);
+        glass.position.z = 0.005;
+        boardGroup.add(glass);
+
+        // 4. Timetable Texture Display Quad
+        const timetableGeo = new THREE.PlaneGeometry(2.14, 1.58);
+        const timetableMat = new THREE.MeshBasicMaterial({
+            map: timetableTex,
+            transparent: true
+        });
+        const timetableMesh = new THREE.Mesh(timetableGeo, timetableMat);
+        timetableMesh.position.set(0, -0.08, 0.02);
+        boardGroup.add(timetableMesh);
+
+        // 5. Header Banner
+        const headerGeo = new THREE.PlaneGeometry(2.14, 0.18);
+        const headerMat = new THREE.MeshBasicMaterial({
+            color: 0x0284c7,
+            transparent: true,
+            opacity: 0.95
+        });
+        const headerMesh = new THREE.Mesh(headerGeo, headerMat);
+        headerMesh.position.set(0, 0.80, 0.025);
+        boardGroup.add(headerMesh);
+
+        // Dynamic Canvas for Header Text
+        const textCanvas = document.createElement('canvas');
+        textCanvas.width = 1024;
+        textCanvas.height = 128;
+        const ctx = textCanvas.getContext('2d');
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(0, 0, 1024, 128);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('COMPUTER ENGINEERING // AR TIMETABLE PORTAL', 512, 50);
+        ctx.font = '22px Arial';
+        ctx.fillStyle = '#e0f2fe';
+        ctx.fillText('Room 103 / ARVR Lab 609  |  Academic Year 2026-27  |  Live AR Anchor', 512, 95);
+
+        const textTex = new THREE.CanvasTexture(textCanvas);
+        const textMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.12, 0.18),
+            new THREE.MeshBasicMaterial({ map: textTex, transparent: true })
+        );
+        textMesh.position.set(0, 0.80, 0.03);
+        boardGroup.add(textMesh);
+
+        // 6. 4 Glowing Corner Vertex Pins
+        const pinGeo = new THREE.SphereGeometry(0.032, 16, 16);
+        const pinMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
+        const pinPositions = [
+            [-1.12, -0.92, 0.02],
+            [ 1.12, -0.92, 0.02],
+            [-1.12,  0.92, 0.02],
+            [ 1.12,  0.92, 0.02]
+        ];
+        pinPositions.forEach(pos => {
+            const pin = new THREE.Mesh(pinGeo, pinMat);
+            pin.position.set(...pos);
+            boardGroup.add(pin);
+        });
+
+        // 7. Subtle Holographic Grid Floor / Reference Shadow
+        const gridHelper = new THREE.GridHelper(6, 20, 0x00e5ff, 0x1e293b);
+        gridHelper.position.y = -1.2;
+        scene.add(gridHelper);
+
+        // Levitation Animation
+        let isLevitating = true;
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            if (isLevitating) {
+                boardGroup.position.y = Math.sin(time * 1.6) * 0.06;
+            }
+
+            // Pulsing neon emission
+            neonMat.emissiveIntensity = 0.7 + 0.3 * Math.sin(time * 2.5);
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // UI Day Tab Selector
+        function selectDay(index) {
+            for (let i = 0; i < 5; i++) {
+                const tab = document.getElementById('tab-' + i);
+                if (tab) tab.classList.toggle('active', i === index);
+            }
+        }
+        // Initialize active day (Friday)
+        selectDay(4);
+
+        function resetCamera() {
+            camera.position.set(0, 0.2, 3.6);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        function toggleLevitation() {
+            isLevitating = !isLevitating;
+            if (!isLevitating) boardGroup.position.y = 0;
+        }
+
+        function toggleModal(show) {
+            document.getElementById('details-modal').style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>

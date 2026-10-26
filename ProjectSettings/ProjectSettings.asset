@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 26
+  productGUID: 94a11f56b23a48e7b92f7d394cf81aa3
+  AndroidProfiler: 0
+  AndroidFilterTouchesWhenObscured: 0
+  AndroidEnableSslPinning: 0
+  defaultScreenOrientation: 1
+  targetDevice: 2
+  useOnDemandResources: 0
+  accelerometerFrequency: 60
+  companyName: CollegeEngineering
+  productName: 3D AR Timetable
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  m_SplashScreenBackgroundColor: {r: 0.05, g: 0.05, b: 0.08, a: 1}
+  m_ShowUnitySplashScreen: 1
+  m_ShowUnitySplashLogo: 1
+  m_SplashScreenOverlayOpacity: 1
+  m_SplashScreenAnimation: 1
+  m_SplashScreenLogoStyle: 1
+  m_SplashScreenDrawMode: 0
+  m_ColorGamut: 0
+  bundleVersion: 1.0.0
+  bundleVersionCode: 1
+  applicationIdentifier:
+    Android: com.college.artimetable
+    Standalone: com.college.artimetable
+  AndroidMinSdkVersion: 24
+  AndroidTargetSdkVersion: 34
+  androidTargetArchitectures: 2
+  androidBlitType: 0
+  androidApplicationName: com.college.artimetable
+  cameraUsageDescription: Camera permission is strictly required to detect image markers and project the 3D Augmented Reality timetable.
+  locationUsageDescription: 
+  microphoneUsageDescription: 
+  muteOtherAudioSources: 0
+  il2cppCompilerConfiguration: 1
+  stripEngineCode: 1
+  activeColorSpace: 1
+  activeInputHandler: 2
+

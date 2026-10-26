@@ -1,0 +1,37 @@
+# Unity generated
+/[Aa]ssets/AssetStoreTools*
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ibrary/
+/[Ll]ocal[Cc]ache/
+/[Ll]ogs/
+/[Mm]emoryCaptures/
+/[Oo]bj/
+/[Pp]ackage[Cc]ache/
+/[Pp]roject[Ss]ettings/ProjectVersion.txt.bak
+/[Tt]emp/
+/[Uu]ser[Ss]ettings/
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Visual Studio / VS Code
+.vs/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# Crashlytics
+crashlytics-build.properties

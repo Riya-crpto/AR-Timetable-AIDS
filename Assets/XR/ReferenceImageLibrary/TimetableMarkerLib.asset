@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64b308e734c5496499890d7967919864, type: 3}
+  m_Name: TimetableMarkerLib
+  m_EditorClassIdentifier: 
+  m_Images:
+  - m_Name: AR_Reference_Marker
+    m_Guid:
+      serializedVersion: 2
+      data0: 0xb0110000
+      data1: 0x00000000
+      data2: 0x00000000
+      data3: 0x00000002
+    m_SpecifySize: 1
+    m_Size: {x: 0.15, y: 0.15}
+    m_Texture: {fileID: 2800000, guid: b0110000000000000000000000000002, type: 3}

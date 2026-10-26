@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR College Timetable - Printable Marker Sheet</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #1a1a2e;
+            background-color: #ffffff;
+            text-align: center;
+        }
+        .header {
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 24px;
+            color: #0d1b2a;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        .header p {
+            margin: 0;
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+        .badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        .marker-frame {
+            display: inline-block;
+            padding: 16px;
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            background: #fafafa;
+            margin: 15px 0;
+        }
+        .marker-img {
+            width: 150mm;
+            height: 150mm;
+            display: block;
+            margin: 0 auto;
+        }
+        .scale-guide {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: bold;
+        }
+        .instructions {
+            margin: 20px auto;
+            max-width: 650px;
+            text-align: left;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 20px;
+        }
+        .instructions h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #0f172a;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #334155;
+        }
+        .footer {
+            margin-top: 25px;
+            font-size: 11px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>College AR Timetable // Physical Anchor Marker</h1>
+        <p>Marker-Based 3D Augmented Reality College Project | Unity AR Foundation & Google ARCore</p>
+        <span class="badge">Target Physical Dimensions: 15.0 cm &times; 15.0 cm (0.15m in AR Engine)</span>
+    </div>
+
+    <div class="marker-frame">
+        <img class="marker-img" src="../Textures/AR_Reference_Marker.png" alt="AR Reference Marker">
+        <div class="scale-guide">
+            &#9664; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; Physical Target Scale: 150mm (15cm) &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; &#9654;
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>Faculty Demonstration & Scanning Instructions:</h3>
+        <ol>
+            <li><strong>Print or Display:</strong> Print this sheet on standard A4 paper at 100% scale (or display this marker on a laptop/tablet screen without glare).</li>
+            <li><strong>Mounting:</strong> Place on a flat vertical wall (classroom door/notice board) or horizontal table.</li>
+            <li><strong>Scanning:</strong> Launch the AR app and point the phone camera at the marker from a distance of 30cm to 1 meter under good room lighting.</li>
+            <li><strong>AR Hologram Lock:</strong> Once detected, the 3D futuristic Timetable Board instantly spawns anchored directly over this marker. Move around the marker to showcase 3D depth, parallax, and rotation tracking.</li>
+        </ol>
+    </div>
+
+    <div class="footer">
+        Department of Computer Engineering / AR-VR Lab &bull; Project: Marker-Based 3D AR Timetable
+    </div>
+
+</body>
+</html>

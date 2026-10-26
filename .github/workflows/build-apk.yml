@@ -1,0 +1,49 @@
+name: Build Android AR APK (Cloud CI/CD)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  buildForAndroid:
+    name: Build Android APK (Unity 2022.3 LTS)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library folder
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+
+      # GameCI Unity Builder - Builds Android APK in Ubuntu container with ARCore support
+      - name: Build Unity Android Project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          unityVersion: 2022.3.20f1
+          buildName: AR_Timetable_College
+          buildsPath: build/Android
+          androidAppBundle: false # Generates direct .apk instead of .aab
+          androidTargetSdkVersion: 34
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AR_Timetable_Android_APK
+          path: build/Android/AR_Timetable_College.apk
+          if-no-files-found: warn
