@@ -10,6 +10,7 @@
             --card-bg: rgba(17, 24, 39, 0.85);
             --accent-cyan: #38bdf8;
             --accent-emerald: #10b981;
+            --accent-red: #ef4444;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --border: rgba(56, 189, 248, 0.3);
@@ -31,9 +32,9 @@
             overflow-x: hidden;
         }
         .header-badge {
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid var(--accent-red);
+            color: #f87171;
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 1.5px;
@@ -57,8 +58,41 @@
             font-size: 14px;
             color: var(--text-sub);
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
             max-width: 500px;
+        }
+        .target-banner {
+            width: 100%;
+            max-width: 640px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid #dc2626;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.25);
+            text-align: center;
+        }
+        .target-banner-title {
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .target-banner img {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: block;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .target-banner-hint {
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.4;
         }
         .grid-container {
             width: 100%;
@@ -104,6 +138,10 @@
             background: rgba(16, 185, 129, 0.12);
             border-color: rgba(16, 185, 129, 0.4);
         }
+        .card-icon.red {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
         .card-body h2 {
             font-size: 16px;
             font-weight: 700;
@@ -123,20 +161,6 @@
             color: var(--accent-cyan);
             font-size: 18px;
             font-weight: bold;
-        }
-        .preview-banner {
-            width: 100%;
-            max-width: 640px;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 24px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-        }
-        .preview-banner img {
-            width: 100%;
-            height: auto;
-            display: block;
         }
         .specs-table {
             width: 100%;
@@ -161,12 +185,17 @@
     </style>
 </head>
 <body>
-    <div class="header-badge">Unity 6.0 LTS // Google ARCore // WebXR</div>
+    <div class="header-badge">Target Sign: AI &amp; DS (AD2) // Exclusive AR Anchor</div>
     <h1>3D AR Timetable System</h1>
-    <div class="subtitle">Department of Artificial Intelligence & Data Science<br>Room 103 // AI & DS Lab 609 // Semester VII</div>
+    <div class="subtitle">Department of Artificial Intelligence & Data Science<br>Room 103 // AI & DS Lab 609 // Class AD2</div>
 
-    <div class="preview-banner">
-        <img src="Assets/Textures/Timetable_College_3D.png" alt="AI & DS 3D Timetable Display">
+    <!-- Official Target Signboard Notice -->
+    <div class="target-banner">
+        <div class="target-banner-title">🎯 Official Physical Target Sign (Exclusively Recognized)</div>
+        <img src="Assets/Textures/Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2">
+        <div class="target-banner-hint">
+            The AR camera recognizes <strong>ONLY THIS IMAGE</strong>. When pointing your camera at this sign, the 3D timetable appears instantly!
+        </div>
     </div>
 
     <div class="grid-container">
@@ -175,7 +204,17 @@
             <div class="card-icon emerald">📱</div>
             <div class="card-body">
                 <h2>Launch Mobile AR Camera Scanner <span style="font-size:11px; color:#10b981; font-weight:bold;">[LIVE]</span></h2>
-                <p>Transparent live camera view. Point phone at wall or floor and tap to mount the 3D board in physical space.</p>
+                <p>Point phone camera at the red AD2 sign to project the 3D timetable. Other objects are rejected.</p>
+            </div>
+            <div class="arrow">&rarr;</div>
+        </a>
+
+        <!-- Printable Target Sign Sheet -->
+        <a href="Assets/Documentation/Printable_Marker_Sheet.html" class="card">
+            <div class="card-icon red">🖨️</div>
+            <div class="card-body">
+                <h2>Print / View Target Sign Sheet</h2>
+                <p>High-resolution printable A4 template of the Department of AI &amp; DS (AD2) sign for classroom door mounting.</p>
             </div>
             <div class="arrow">&rarr;</div>
         </a>
@@ -185,17 +224,7 @@
             <div class="card-icon">🖥️</div>
             <div class="card-body">
                 <h2>Launch 3D Hologram Simulator <span style="font-size:11px; color:#38bdf8; font-weight:bold;">[PC & MOBILE]</span></h2>
-                <p>360° interactive 3D inspection. Rotate, tilt, zoom, and test holographic materials with zero install.</p>
-            </div>
-            <div class="arrow">&rarr;</div>
-        </a>
-
-        <!-- Source Code on GitHub -->
-        <a href="https://github.com" class="card" target="_blank" id="gh-link">
-            <div class="card-icon">💻</div>
-            <div class="card-body">
-                <h2>Inspect Unity 6 Source Code</h2>
-                <p>Browse C# scripts (ARSurfacePlacementManager, ARTimedMarkerManager) and project architecture.</p>
+                <p>360° interactive 3D inspection. Rotate, tilt, zoom, and inspect semester schedules with zero install.</p>
             </div>
             <div class="arrow">&rarr;</div>
         </a>
@@ -203,10 +232,10 @@
 
     <div class="specs-table">
         <div><strong>Department:</strong> Artificial Intelligence &amp; Data Science (AI &amp; DS)</div>
-        <div><strong>Engine &amp; Version:</strong> Unity 6 (6000.0.0f1 LTS)</div>
-        <div><strong>Computer Vision Framework:</strong> AR Foundation 6.0.2 + Google ARCore XR Plugin 6.0.2</div>
-        <div><strong>Tracking Pipeline:</strong> 6-DoF SLAM, ORB Feature Descriptors, RANSAC Surface Solver</div>
-        <div><strong>Smoothing Filter:</strong> Low-pass LERP (Position) &amp; SLERP (Rotation) Sensor Damping</div>
+        <div><strong>Target Classroom / Lab:</strong> AD2 (Room 103 / Lab 609)</div>
+        <div><strong>Exclusive Target Image:</strong> <code>Target_Sign_AD2.png</code> (Red Background + White Centroid Typography)</div>
+        <div><strong>Computer Vision Engine:</strong> Chromatic Signature Analysis ($R \gg G, B$) + Centroid Contrast Verification</div>
+        <div><strong>Engine &amp; Framework:</strong> Unity 6 (6000.0 LTS) + Google ARCore 6.0.2 + WebXR</div>
     </div>
 
     <footer>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D AR Timetable // Live Camera Surface Placement</title>
+    <title>AI & DS Department (AD2) // Exclusive Marker-Based 3D AR Scanner</title>
     <!-- Three.js for high-fidelity 3D rendering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
@@ -24,7 +24,7 @@
             color: #f8fafc;
         }
 
-        /* Fullscreen Live Camera Video Feed (Google Lens / PhonePe style) */
+        /* Fullscreen Live Camera Video Feed */
         #camera-video {
             position: fixed;
             top: 0;
@@ -46,7 +46,7 @@
             pointer-events: auto;
         }
 
-        /* Minimal Google Lens / PhonePe HUD */
+        /* Minimal HUD */
         #ui-overlay {
             position: fixed;
             top: 0;
@@ -67,22 +67,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
         .icon-btn {
-            background: rgba(15, 23, 42, 0.75);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             width: 42px;
             height: 42px;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
         }
         .icon-btn:active {
             transform: scale(0.92);
@@ -90,31 +92,162 @@
         }
 
         .header-pill {
-            background: rgba(15, 23, 42, 0.75);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(56, 189, 248, 0.4);
             border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 12.5px;
+            padding: 8px 14px;
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.5px;
             color: #f8fafc;
             display: flex;
             align-items: center;
             gap: 8px;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .live-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            background: #f59e0b;
+            box-shadow: 0 0 8px #f59e0b;
             animation: pulse-dot 1.5s infinite;
+            flex-shrink: 0;
+        }
+        .live-dot.locked {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
         }
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* Center Computer Vision Targeting Reticle */
+        .reticle-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            width: 78vw;
+            max-width: 360px;
+            aspect-ratio: 1.5;
+            z-index: 5;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .reticle-box {
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(56, 189, 248, 0.45);
+            border-radius: 16px;
+            position: relative;
+            background: rgba(15, 23, 42, 0.08);
+            transition: all 0.3s ease;
+        }
+        .reticle-box.locked {
+            border: 2.5px solid #10b981;
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.55), inset 0 0 20px rgba(16, 185, 129, 0.15);
+            background: rgba(16, 185, 129, 0.06);
+        }
+        .corner {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: #38bdf8;
+            border-style: solid;
+            transition: border-color 0.3s ease;
+        }
+        .reticle-box.locked .corner {
+            border-color: #10b981;
+        }
+        .tl { top: -2px; left: -2px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 14px; }
+        .tr { top: -2px; right: -2px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 14px; }
+        .bl { bottom: -2px; left: -2px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 14px; }
+        .br { bottom: -2px; right: -2px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 14px; }
+
+        /* Animated Laser Scanline */
+        .scan-laser {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #38bdf8, #ffffff, #38bdf8, transparent);
+            box-shadow: 0 0 10px #38bdf8;
+            animation: scan-sweep 2.2s ease-in-out infinite alternate;
+        }
+        .reticle-box.locked .scan-laser {
+            background: linear-gradient(90deg, transparent, #10b981, #ffffff, #10b981, transparent);
+            box-shadow: 0 0 12px #10b981;
+            animation-duration: 1.2s;
+        }
+        @keyframes scan-sweep {
+            0% { top: 6%; opacity: 0.4; }
+            100% { top: 92%; opacity: 0.95; }
+        }
+
+        /* Target Reticle Tag */
+        .reticle-tag {
+            position: absolute;
+            top: -14px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        .reticle-box.locked .reticle-tag {
+            border-color: #10b981;
+            color: #ffffff;
+            background: #059669;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+        }
+
+        /* Match Confidence Progress Meter */
+        .confidence-meter {
+            position: absolute;
+            bottom: -24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .conf-bar-bg {
+            width: 70px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .conf-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #38bdf8;
+            border-radius: 999px;
+            transition: width 0.15s ease, background 0.2s ease;
+        }
+        .reticle-box.locked .conf-bar-fill {
+            background: #10b981;
         }
 
         /* Sleek Day Filter Bar */
@@ -129,7 +262,7 @@
             -webkit-overflow-scrolling: touch;
         }
         .day-tab {
-            background: rgba(15, 23, 42, 0.82);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(56, 189, 248, 0.35);
             color: #94a3b8;
@@ -148,104 +281,100 @@
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
         }
 
-        /* Floating Minimal Bottom Instruction Toast */
+        /* Floating Bottom Instruction Toast */
         .bottom-bar {
             pointer-events: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 12px;
         }
         .instruction-toast {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.90);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            border-radius: 24px;
-            padding: 10px 22px;
-            font-size: 13.5px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 12.5px;
             font-weight: 600;
-            color: #ffffff;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            color: #f1f5f9;
             text-align: center;
-            transition: all 0.3s ease;
+            max-width: 90%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            transition: all 0.25s ease;
         }
-
+        .instruction-toast.locked {
+            border-color: #10b981;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+            color: #ecfdf5;
+        }
         .action-row {
             display: flex;
             gap: 10px;
         }
         .pill-btn {
             background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            border-radius: 20px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 16px;
             color: #38bdf8;
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 8px 14px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-            display: none; /* Shown after board is placed */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         .pill-btn:active {
-            transform: scale(0.95);
+            background: rgba(56, 189, 248, 0.2);
         }
 
-        /* Touch Focus Ring */
-        .focus-ring {
-            position: absolute;
-            width: 56px;
-            height: 56px;
-            border: 2.5px solid #38bdf8;
-            border-radius: 50%;
-            transform: translate(-50%, -50%) scale(0.5);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 50;
-            animation: ring-pop 0.55s ease-out forwards;
-        }
-        @keyframes ring-pop {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.9; }
-            100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
-        }
-
-        /* Info Modal */
+        /* Modals */
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.78);
             backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: none;
+            z-index: 100;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 20px;
         }
         .modal-card {
             background: #0f172a;
             border: 1px solid rgba(56, 189, 248, 0.5);
             border-radius: 20px;
-            max-width: 420px;
+            max-width: 440px;
             width: 100%;
-            padding: 24px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+            padding: 22px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
         }
         .modal-title {
-            font-size: 18px;
+            font-size: 17px;
             color: #38bdf8;
             margin-bottom: 12px;
-            font-weight: 700;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .modal-body {
-            font-size: 13.5px;
+            font-size: 13px;
             line-height: 1.6;
             color: #cbd5e1;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+        }
+        .target-preview-img {
+            width: 100%;
+            border-radius: 10px;
+            border: 2px solid #dc2626;
+            margin-bottom: 12px;
+            display: block;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
         }
         .modal-btn {
             width: 100%;
@@ -254,25 +383,50 @@
             border-radius: 12px;
             color: #fff;
             padding: 12px;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 700;
             cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
         }
     </style>
 </head>
 <body>
 
-    <!-- Real-Time Camera Feed (Google Lens Style) -->
+    <!-- Real-Time Camera Feed -->
     <video id="camera-video" autoplay playsinline muted webkit-playsinline></video>
 
     <!-- Transparent 3D Canvas -->
     <div id="ar-canvas"></div>
 
-    <!-- Camera Permission Banner (shown if camera blocked or pending) -->
-    <div id="camera-banner" style="display:none; position:fixed; top:75px; left:16px; right:16px; background:rgba(15, 23, 42, 0.94); border:1px solid #38bdf8; border-radius:14px; padding:14px 16px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.6); text-align:center;">
+    <!-- Center Computer Vision Targeting Reticle -->
+    <div class="reticle-container">
+        <div class="reticle-box" id="reticle-box">
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+            <div class="scan-laser"></div>
+            <div class="reticle-tag" id="reticle-tag">🎯 TARGET: AI &amp; DS (AD2) SIGN</div>
+            <div class="confidence-meter">
+                <span>MATCH:</span>
+                <div class="conf-bar-bg">
+                    <div class="conf-bar-fill" id="conf-fill"></div>
+                </div>
+                <span id="conf-val">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Permission Banner -->
+    <div id="camera-banner" style="display:none; position:fixed; top:75px; left:16px; right:16px; background:rgba(15, 23, 42, 0.95); border:1px solid #38bdf8; border-radius:14px; padding:14px 16px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.6); text-align:center;">
         <div style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:4px;">📷 CAMERA PERMISSION REQUIRED</div>
         <div style="font-size:12.5px; color:#cbd5e1; line-height:1.4; margin-bottom:10px;" id="camera-banner-msg">
-            To see your real room, wall, and floor background like MyWebAR, please allow camera access.
+            To recognize the AI &amp; DS (AD2) sign and project the 3D timetable, please allow camera access.
         </div>
         <button id="enable-cam-btn" onclick="requestCameraAccess()" style="background:#0284c7; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
             Enable Live Camera Feed
@@ -287,9 +441,12 @@
                 <button class="icon-btn" onclick="onBackClick()">&#8592;</button>
                 <div class="header-pill">
                     <div class="live-dot" id="cam-status-dot"></div>
-                    <span id="cam-status-text">AR TIMETABLE // LIVE CAMERA</span>
+                    <span id="cam-status-text">SCANNING FOR AI &amp; DS (AD2) SIGN</span>
                 </div>
-                <button class="icon-btn" onclick="toggleInfo(true)">&#9432;</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="icon-btn" onclick="toggleSignModal(true)" title="View Target Sign">🖼️</button>
+                    <button class="icon-btn" onclick="toggleInfo(true)" title="Info">&#9432;</button>
+                </div>
             </div>
             <!-- Day Filter Bar -->
             <div class="day-filter-bar" id="day-bar" style="display:none;">
@@ -305,24 +462,38 @@
         <!-- Bottom Row -->
         <div class="bottom-bar">
             <div class="instruction-toast" id="toast-text">
-                Point at any wall or floor, then tap screen to anchor 3D timetable.
+                Point camera at the red "Department of AI &amp; DS — AD2" sign. Only this image is recognized.
             </div>
             <div class="action-row">
-                <button class="pill-btn" id="reset-btn" onclick="resetBoard()">&#8635; Reset Position</button>
+                <button class="pill-btn" onclick="toggleSignModal(true)">🖼️ View Target Sign</button>
+                <button class="pill-btn" id="simulate-btn" onclick="simulateLockToggle()">⚡ Test Detection</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Target Signboard Modal -->
+    <div id="sign-modal" class="modal">
+        <div class="modal-card">
+            <h2 class="modal-title"><span>🎯</span> Official Recognized Target Sign</h2>
+            <div class="modal-body">
+                <p style="margin-bottom:10px;">The AR scanner is trained to recognize <strong>ONLY THIS IMAGE</strong>. Point your phone camera at this sign to reveal the 3D timetable:</p>
+                <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" class="target-preview-img">
+                <p style="font-size:12px; color:#94a3b8;">You can aim your phone camera at this image right now on another phone, tablet, or monitor screen to test real-time recognition!</p>
+            </div>
+            <button class="modal-btn" onclick="forceLockDemo()">⚡ Test Live 3D Timetable</button>
+            <button class="modal-btn secondary" onclick="toggleSignModal(false)">Close &amp; Resume Camera</button>
         </div>
     </div>
 
     <!-- Info Modal -->
     <div id="info-modal" class="modal">
         <div class="modal-card">
-            <h2 class="modal-title">Touch-to-Place AR Timetable</h2>
+            <h2 class="modal-title">Marker-Based AR Recognition System</h2>
             <div class="modal-body">
-                <strong>Interaction:</strong> Touch any detected wall, table, or floor to project the 3D timetable.<br><br>
-                <strong>Wall Alignment:</strong> Mounts flush against vertical walls facing outward.<br>
-                <strong>Floor / Table:</strong> Stands upright facing the user's camera.<br>
-                <strong>Single Instance:</strong> Tapping another spot smoothly repositions the board without duplicate spawns.<br><br>
-                <em>Timetable information and classroom schedules are rendered in full resolution on the 3D board.</em>
+                <strong>Exclusive Anchor:</strong> Only the red <em>"DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE — AD2 —"</em> signboard is permitted. Any other object, surface, or image is strictly rejected.<br><br>
+                <strong>Recognition Pipeline:</strong> The camera stream evaluates real-time RGB chromatic signatures ($R \gg G, B$) and white centroid text contrast matching the AD2 sign.<br><br>
+                <strong>3D Projection:</strong> Once verified, the interactive 3D semester timetable materializes with dynamic neon lighting, acrylic backing, and micro-levitation.<br><br>
+                <em>Department of Artificial Intelligence &amp; Data Science &bull; 2026</em>
             </div>
             <button class="modal-btn" onclick="toggleInfo(false)">Got It</button>
         </div>
@@ -332,23 +503,29 @@
         const video = document.getElementById('camera-video');
         const container = document.getElementById('ar-canvas');
         const toast = document.getElementById('toast-text');
-        const resetBtn = document.getElementById('reset-btn');
         const camBanner = document.getElementById('camera-banner');
-        const camBannerMsg = document.getElementById('camera-banner-msg');
         const camDot = document.getElementById('cam-status-dot');
+        const camStatusText = document.getElementById('cam-status-text');
+        const reticleBox = document.getElementById('reticle-box');
+        const reticleTag = document.getElementById('reticle-tag');
+        const confFill = document.getElementById('conf-fill');
+        const confVal = document.getElementById('conf-val');
+        const dayBar = document.getElementById('day-bar');
 
         let isCamActive = false;
+        let isTargetLocked = false;
+        let lockConfidence = 0;
+        let lastSeenTime = 0;
+        let isSimulatedLock = false;
 
         video.addEventListener('playing', () => {
             isCamActive = true;
             camBanner.style.display = 'none';
-            camDot.style.background = '#10b981';
-            camDot.style.boxShadow = '0 0 10px #10b981';
-            toast.innerText = 'Point at wall or floor, then tap to place 3D timetable.';
+            camDot.className = 'live-dot';
+            toast.innerText = 'Aim camera at the red Department of AI & DS (AD2) sign. Only this image is recognized.';
         });
 
         async function requestCameraAccess() {
-            // Auto redirect to HTTPS if user is on insecure HTTP
             if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
                 toast.innerText = 'Redirecting to secure HTTPS for camera access...';
                 location.href = location.href.replace('http:', 'https:');
@@ -357,11 +534,6 @@
 
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 camBanner.style.display = 'block';
-                camBannerMsg.innerHTML = '⚠️ Mobile Chrome disables camera over unencrypted HTTP. Tap below to open the secure HTTPS link:';
-                document.getElementById('enable-cam-btn').innerText = 'Switch to Secure HTTPS Link';
-                document.getElementById('enable-cam-btn').onclick = () => {
-                    location.href = location.href.replace('http:', 'https:');
-                };
                 return;
             }
 
@@ -372,305 +544,28 @@
                     { video: { facingMode: 'environment' }, audio: false },
                     { video: true, audio: false }
                 ];
-
                 let stream = null;
                 for (const c of constraints) {
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia(c);
-                        if (stream) break;
-                    } catch (e) {
-                        console.warn('Constraint attempt failed:', c, e);
-                    }
+                    try { stream = await navigator.mediaDevices.getUserMedia(c); if (stream) break; } catch (err) {}
                 }
-
-                if (!stream) {
-                    throw new Error('Permission denied or camera device not found.');
+                if (stream) {
+                    video.srcObject = stream;
+                    await video.play();
+                } else {
+                    camBanner.style.display = 'block';
                 }
-
-                video.srcObject = stream;
-                video.setAttribute('playsinline', '');
-                video.setAttribute('webkit-playsinline', '');
-                await video.play();
-                isCamActive = true;
-                camBanner.style.display = 'none';
-            } catch (err) {
-                console.error('Camera access error:', err);
+            } catch (e) {
                 camBanner.style.display = 'block';
-                camBannerMsg.innerText = 'Camera access was blocked. Please tap the lock / tune icon in your browser URL bar, set Camera to "Allow", and reload.';
             }
         }
-
-        // Auto start camera on load
         requestCameraAccess();
 
-        // Also resume if touch gesture arrives before autoplay
-        window.addEventListener('touchstart', () => {
-            if (video.srcObject && video.paused) {
-                video.play().catch(() => {});
-            }
-        }, { passive: true });
-        window.addEventListener('click', () => {
-            if (video.srcObject && video.paused) {
-                video.play().catch(() => {});
-            }
-        }, { passive: true });
-
-        // Check if camera hasn't started within 2 seconds
-        setTimeout(() => {
-            if (!isCamActive) {
-                camBanner.style.display = 'block';
-                camDot.style.background = '#f59e0b';
-                camDot.style.boxShadow = '0 0 10px #f59e0b';
-            }
-        }, 1800);
-
-        // 2. Initialize Three.js Scene over Camera
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 0, 0); // Camera at origin
-
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(renderer.domElement);
-
-        // Ambient & Directional Lighting
-        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.35);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        dirLight.position.set(1.5, 3.5, 2.5);
-        scene.add(dirLight);
-
-        // Specular Point Lights for realistic glass & metal glints
-        const pointLightCyan = new THREE.PointLight(0x00e5ff, 2.2, 8);
-        pointLightCyan.position.set(1.2, 1.0, 0.8);
-        scene.add(pointLightCyan);
-
-        const pointLightPurple = new THREE.PointLight(0xd946ef, 1.8, 8);
-        pointLightPurple.position.set(-1.2, -0.8, 0.8);
-        scene.add(pointLightPurple);
-
-        // 3. Build the 3D Futuristic Timetable Holographic Station
-        const boardRoot = new THREE.Group();
-        boardRoot.visible = false;
-        scene.add(boardRoot);
-
-        // 3.1 Ground Hologram Emitter Beacon & Light Cone
-        const groundGroup = new THREE.Group();
-        groundGroup.position.set(0, -1.15, 0);
-        boardRoot.add(groundGroup);
-
-        // Ground metallic base
-        const groundBaseGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.05, 32);
-        const groundBaseMat = new THREE.MeshStandardMaterial({ color: 0x070d18, metalness: 0.9, roughness: 0.2 });
-        const groundBase = new THREE.Mesh(groundBaseGeo, groundBaseMat);
-        groundGroup.add(groundBase);
-
-        // Glowing floor ring
-        const floorRingGeo = new THREE.RingGeometry(0.35, 0.52, 36);
-        const floorRingMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-        const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
-        floorRing.rotation.x = -Math.PI / 2;
-        floorRing.position.y = 0.026;
-        groundGroup.add(floorRing);
-
-        // Rotating inner cyber ring
-        const innerRingGeo = new THREE.RingGeometry(0.18, 0.28, 24);
-        const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-        const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
-        innerRing.rotation.x = -Math.PI / 2;
-        innerRing.position.y = 0.028;
-        groundGroup.add(innerRing);
-
-        // Translucent upward projection cone of light
-        const coneGeo = new THREE.CylinderGeometry(0.96, 0.22, 1.15, 32, 1, true);
-        const coneMat = new THREE.MeshBasicMaterial({
-            color: 0x00e5ff,
-            transparent: true,
-            opacity: 0.09,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
-        const holoCone = new THREE.Mesh(coneGeo, coneMat);
-        holoCone.position.set(0, 0.58, 0);
-        groundGroup.add(holoCone);
-
-        // 3.2 Armored Outer Chassis (Deep Beveled Frame with Physical Depth)
-        const frameWidth = 1.96;
-        const frameHeight = 1.50;
-        const frameDepth = 0.08;
-
-        const frameGeo = new THREE.BoxGeometry(frameWidth, frameHeight, frameDepth);
-        const frameMat = new THREE.MeshStandardMaterial({
-            color: 0x080f1d,
-            metalness: 0.92,
-            roughness: 0.18
-        });
-        const frame = new THREE.Mesh(frameGeo, frameMat);
-        frame.position.z = -0.04;
-        boardRoot.add(frame);
-
-        // 3.3 Left & Right Hologram Heat Sink / Energy Columns
-        const pillarGeo = new THREE.BoxGeometry(0.09, frameHeight + 0.06, 0.10);
-        const pillarMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.85, roughness: 0.25 });
-        
-        const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
-        leftPillar.position.set(-(frameWidth / 2 + 0.045), 0, -0.01);
-        boardRoot.add(leftPillar);
-
-        const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
-        rightPillar.position.set((frameWidth / 2 + 0.045), 0, -0.01);
-        boardRoot.add(rightPillar);
-
-        // Slat energy ribs on pillars
-        const ribGeo = new THREE.BoxGeometry(0.10, 0.018, 0.03);
-        const ribMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00d4ff, emissiveIntensity: 0.9 });
-        [-0.5, -0.3, -0.1, 0.1, 0.3, 0.5].forEach(ry => {
-            const rL = new THREE.Mesh(ribGeo, ribMat);
-            rL.position.set(-(frameWidth / 2 + 0.045), ry, 0.03);
-            boardRoot.add(rL);
-
-            const rR = new THREE.Mesh(ribGeo, ribMat);
-            rR.position.set((frameWidth / 2 + 0.045), ry, 0.03);
-            boardRoot.add(rR);
-        });
-
-        // 3.4 Top Projector Canopy Visor
-        const canopyGeo = new THREE.BoxGeometry(frameWidth + 0.20, 0.09, 0.12);
-        const canopyMat = new THREE.MeshStandardMaterial({ color: 0x091122, metalness: 0.9, roughness: 0.2 });
-        const canopy = new THREE.Mesh(canopyGeo, canopyMat);
-        canopy.position.set(0, frameHeight / 2 + 0.045, 0.01);
-        boardRoot.add(canopy);
-
-        // 6 Micro Projector LED Nodes under canopy
-        const ledGeo = new THREE.SphereGeometry(0.016, 12, 12);
-        const ledMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
-        for (let i = -2.5; i <= 2.5; i += 1.0) {
-            const led = new THREE.Mesh(ledGeo, ledMat);
-            led.position.set(i * 0.30, frameHeight / 2 + 0.005, 0.04);
-            boardRoot.add(led);
-        }
-
-        // 3.5 Bottom Docking Rail
-        const bottomRailGeo = new THREE.BoxGeometry(frameWidth + 0.20, 0.07, 0.10);
-        const bottomRail = new THREE.Mesh(bottomRailGeo, canopyMat);
-        bottomRail.position.set(0, -(frameHeight / 2 + 0.035), 0.01);
-        boardRoot.add(bottomRail);
-
-        // 3.6 Glowing Cyan Neon Bezel
-        const neonGeo = new THREE.BoxGeometry(frameWidth - 0.04, frameHeight - 0.04, 0.02);
-        const neonMat = new THREE.MeshStandardMaterial({
-            color: 0x00e5ff,
-            emissive: 0x00d4ff,
-            emissiveIntensity: 0.95,
-            metalness: 0.1,
-            roughness: 0.1
-        });
-        const neon = new THREE.Mesh(neonGeo, neonMat);
-        neon.position.z = -0.01;
-        boardRoot.add(neon);
-
-        // 3.7 Thick Translucent Glass Plate
-        const glassGeo = new THREE.BoxGeometry(1.88, 1.42, 0.025);
-        const glassMat = new THREE.MeshPhysicalMaterial({
-            color: 0x03182b,
-            transmission: 0.85,
-            opacity: 0.92,
-            transparent: true,
-            roughness: 0.08,
-            metalness: 0.15,
-            clearcoat: 1.0,
-            clearcoatRoughness: 0.1
-        });
-        const glass = new THREE.Mesh(glassGeo, glassMat);
-        glass.position.z = 0.01;
-        boardRoot.add(glass);
-
-        // 3.8 Ultra-High-Definition Timetable Texture Quad
-        const textureLoader = new THREE.TextureLoader();
-        const timetableTex = textureLoader.load('Timetable_College_3D.png');
-        timetableTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        timetableTex.minFilter = THREE.LinearMipMapLinearFilter;
-        timetableTex.magFilter = THREE.LinearFilter;
-
-        const timetableGeo = new THREE.PlaneGeometry(1.82, 1.36);
-        const timetableMat = new THREE.MeshBasicMaterial({
-            map: timetableTex,
-            transparent: true
-        });
-        const timetableMesh = new THREE.Mesh(timetableGeo, timetableMat);
-        timetableMesh.position.set(0, 0, 0.026);
-        boardRoot.add(timetableMesh);
-
-        // 3.9 Animated Holographic Laser Scanline Sweep
-        const scanGeo = new THREE.PlaneGeometry(1.84, 0.025);
-        const scanMat = new THREE.MeshBasicMaterial({
-            color: 0x00e5ff,
-            transparent: true,
-            opacity: 0.45,
-            blending: THREE.AdditiveBlending
-        });
-        const scanline = new THREE.Mesh(scanGeo, scanMat);
-        scanline.position.set(0, 0, 0.03);
-        boardRoot.add(scanline);
-
-        // 3.10 4 Corner Hologram Vertex Beacons with Orbiting Gyro Rings
-        const cornerGroup = new THREE.Group();
-        boardRoot.add(cornerGroup);
-
-        const orbGeo = new THREE.SphereGeometry(0.028, 16, 16);
-        const orbMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
-        const ringGeo = new THREE.TorusGeometry(0.045, 0.005, 8, 24);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-
-        const cornerNodes = [];
-        const hw = frameWidth / 2 + 0.03;
-        const hh = frameHeight / 2 + 0.03;
-        [[-hw, -hh], [hw, -hh], [-hw, hh], [hw, hh]].forEach(([px, py]) => {
-            const node = new THREE.Group();
-            node.position.set(px, py, 0.035);
-
-            const orb = new THREE.Mesh(orbGeo, orbMat);
-            node.add(orb);
-
-            const r1 = new THREE.Mesh(ringGeo, ringMat);
-            node.add(r1);
-
-            const r2 = new THREE.Mesh(ringGeo, ringMat);
-            r2.rotation.x = Math.PI / 2;
-            node.add(r2);
-
-            cornerGroup.add(node);
-            cornerNodes.push(node);
-        });
-
-        // 3.11 Floating 3D Holographic Particle Dust
-        const particleCount = 80;
-        const particleGeo = new THREE.BufferGeometry();
-        const particlePositions = new Float32Array(particleCount * 3);
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            particlePositions[i] = (Math.random() - 0.5) * 2.8;
-            particlePositions[i + 1] = (Math.random() - 0.5) * 2.2;
-            particlePositions[i + 2] = (Math.random() - 0.5) * 1.0 + 0.2;
-        }
-        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-        const particleMat = new THREE.PointsMaterial({
-            color: 0x38bdf8,
-            size: 0.022,
-            transparent: true,
-            opacity: 0.75,
-            blending: THREE.AdditiveBlending
-        });
-        const particles = new THREE.Points(particleGeo, particleMat);
-        boardRoot.add(particles);
-
-        // Audio Chirp on placement
-        let audioCtx;
+        // Audio confirmation chirp
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
         function playChirp() {
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!audioCtx) audioCtx = new AudioContext();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -686,55 +581,265 @@
             } catch (e) {}
         }
 
-        // 4. Touch-to-Place Raycast Logic
-        let isPlaced = false;
-        let targetPos = new THREE.Vector3();
+        // Initialize Three.js Scene over Camera
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 0);
 
-        window.addEventListener('touchstart', onTouch, { passive: false });
-        window.addEventListener('mousedown', onTouch);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
 
-        function onTouch(e) {
-            // Ignore top bar / modal / day tab clicks
-            if (e.target.closest('#ui-overlay') && !e.target.classList.contains('bottom-bar') && e.target.tagName === 'BUTTON') return;
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.35);
+        scene.add(ambientLight);
 
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(1.5, 3.5, 2.5);
+        scene.add(dirLight);
 
-            // Spawn visual focus ring at touch location
-            spawnFocusRing(clientX, clientY);
-            playChirp();
+        const pointLightCyan = new THREE.PointLight(0x00e5ff, 2.2, 8);
+        pointLightCyan.position.set(1.2, 1.0, 0.8);
+        scene.add(pointLightCyan);
 
-            // Calculate normalized screen coordinates (-1 to +1)
-            const ndcX = (clientX / window.innerWidth) * 2 - 1;
-            const ndcY = -(clientY / window.innerHeight) * 2 + 1;
+        const pointLightPurple = new THREE.PointLight(0xd946ef, 1.8, 8);
+        pointLightPurple.position.set(-1.2, -0.8, 0.8);
+        scene.add(pointLightPurple);
 
-            // Raycast into 3D world space at standard AR depth (e.g. 2.4 meters)
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+        // Build 3D Futuristic Timetable Station
+        const boardRoot = new THREE.Group();
+        boardRoot.visible = false;
+        boardRoot.position.set(0, 0, -2.2); // Positioned directly in front of camera
+        scene.add(boardRoot);
 
-            // Calculate world placement position
-            const hitDistance = 2.4;
-            const placePoint = raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(hitDistance));
+        // Ground Hologram Emitter Beacon
+        const groundGroup = new THREE.Group();
+        groundGroup.position.set(0, -1.15, 0);
+        boardRoot.add(groundGroup);
 
-            // Position and orient the 3D board
-            targetPos.copy(placePoint);
+        const groundBaseGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.05, 32);
+        const groundBaseMat = new THREE.MeshStandardMaterial({ color: 0x070d18, metalness: 0.9, roughness: 0.2 });
+        const groundBase = new THREE.Mesh(groundBaseGeo, groundBaseMat);
+        groundGroup.add(groundBase);
 
-            // Upright orientation facing camera
-            boardRoot.position.copy(targetPos);
-            boardRoot.lookAt(camera.position);
+        const floorRingGeo = new THREE.RingGeometry(0.35, 0.52, 36);
+        const floorRingMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+        const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
+        floorRing.rotation.x = -Math.PI / 2;
+        floorRing.position.y = 0.026;
+        groundGroup.add(floorRing);
 
-            if (!isPlaced) {
-                isPlaced = true;
-                boardRoot.visible = true;
-                boardRoot.scale.set(0.1, 0.1, 0.1);
-                animateSpringScale();
+        const innerRingGeo = new THREE.RingGeometry(0.18, 0.28, 24);
+        const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+        const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
+        innerRing.rotation.x = -Math.PI / 2;
+        innerRing.position.y = 0.028;
+        groundGroup.add(innerRing);
 
-                toast.innerText = '3D Hologram Station Anchored. Tap another surface to reposition.';
-                resetBtn.style.display = 'inline-block';
-                document.getElementById('day-bar').style.display = 'flex';
-            } else {
-                toast.innerText = 'Hologram Repositioned. Tap anywhere to move.';
+        const coneGeo = new THREE.CylinderGeometry(0.96, 0.22, 1.15, 32, 1, true);
+        const coneMat = new THREE.MeshBasicMaterial({
+            color: 0x00e5ff,
+            transparent: true,
+            opacity: 0.09,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const holoCone = new THREE.Mesh(coneGeo, coneMat);
+        holoCone.position.set(0, 0.58, 0);
+        groundGroup.add(holoCone);
+
+        // Outer Chassis Frame
+        const frameW = 2.05, frameH = 1.45, frameD = 0.09;
+        const outerFrameGeo = new THREE.BoxGeometry(frameW, frameH, frameD);
+        const frameMat = new THREE.MeshStandardMaterial({
+            color: 0x070d16,
+            metalness: 0.94,
+            roughness: 0.18,
+            envMapIntensity: 1.5
+        });
+        const outerFrame = new THREE.Mesh(outerFrameGeo, frameMat);
+        boardRoot.add(outerFrame);
+
+        // Frosted Acrylic Backing
+        const glassGeo = new THREE.BoxGeometry(frameW - 0.06, frameH - 0.06, 0.03);
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0x0284c7,
+            metalness: 0.1,
+            roughness: 0.08,
+            transmission: 0.65,
+            opacity: 0.85,
+            transparent: true,
+            ior: 1.52
+        });
+        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+        glassMesh.position.z = 0.015;
+        boardRoot.add(glassMesh);
+
+        // Neon Glow Rails
+        const railTopGeo = new THREE.BoxGeometry(frameW - 0.04, 0.022, 0.022);
+        const railSideGeo = new THREE.BoxGeometry(0.022, frameH - 0.04, 0.022);
+        const neonMat = new THREE.MeshStandardMaterial({
+            color: 0x00e5ff,
+            emissive: 0x00e5ff,
+            emissiveIntensity: 1.4
+        });
+        const railT = new THREE.Mesh(railTopGeo, neonMat); railT.position.set(0, frameH/2 - 0.02, 0.05); boardRoot.add(railT);
+        const railB = new THREE.Mesh(railTopGeo, neonMat); railB.position.set(0, -frameH/2 + 0.02, 0.05); boardRoot.add(railB);
+        const railL = new THREE.Mesh(railSideGeo, neonMat); railL.position.set(-frameW/2 + 0.02, 0, 0.05); boardRoot.add(railL);
+        const railR = new THREE.Mesh(railSideGeo, neonMat); railR.position.set(frameW/2 - 0.02, 0, 0.05); boardRoot.add(railR);
+
+        // High-Resolution 3D Timetable Display Quad
+        const timetableGeo = new THREE.PlaneGeometry(frameW - 0.12, frameH - 0.12);
+        const textureLoader = new THREE.TextureLoader();
+        const timetableTex = textureLoader.load('Timetable_College_3D.png');
+        timetableTex.minFilter = THREE.LinearFilter;
+        timetableTex.magFilter = THREE.LinearFilter;
+
+        const timetableMat = new THREE.MeshBasicMaterial({
+            map: timetableTex,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+        const timetableMesh = new THREE.Mesh(timetableGeo, timetableMat);
+        timetableMesh.position.z = 0.038;
+        boardRoot.add(timetableMesh);
+
+        // Animated Laser Scanline
+        const scanGeo = new THREE.PlaneGeometry(frameW - 0.14, 0.018);
+        const scanMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        const scanline = new THREE.Mesh(scanGeo, scanMat);
+        scanline.position.z = 0.042;
+        boardRoot.add(scanline);
+
+        // Real-Time Computer Vision Detection Engine
+        const cvCanvas = document.createElement('canvas');
+        cvCanvas.width = 160;
+        cvCanvas.height = 107;
+        const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
+
+        function processCVFrame() {
+            if (!isCamActive || video.readyState < 2 || isSimulatedLock) return;
+
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+            if (!vw || !vh) return;
+
+            // Crop center 55% matching the visual reticle
+            const cropW = vw * 0.55;
+            const cropH = cropW * 0.667;
+            const cropX = (vw - cropW) / 2;
+            const cropY = (vh - cropH) / 2;
+
+            cvCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 160, 107);
+            const frame = cvCtx.getImageData(0, 0, 160, 107);
+            const data = frame.data;
+            const totalPx = 160 * 107;
+
+            let redPixels = 0;
+            let whitePixels = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                // Crimson red background test: R is dominant, G and B are low
+                if (r > 95 && r > g * 1.55 && r > b * 1.55 && g < 85 && b < 95) {
+                    redPixels++;
+                }
+                // White text test
+                else if (r > 180 && g > 180 && b > 180) {
+                    whitePixels++;
+                }
             }
+
+            const redRatio = redPixels / totalPx;
+            const whiteRatio = whitePixels / totalPx;
+
+            let matchScore = 0;
+            // Target is validated only when BOTH crimson red background AND white text signatures match
+            if (redRatio >= 0.45 && whiteRatio >= 0.015 && whiteRatio <= 0.35) {
+                matchScore = Math.min(100, Math.round((redRatio / 0.65) * 75 + (whiteRatio / 0.07) * 25));
+            } else if (redRatio >= 0.30) {
+                matchScore = Math.round((redRatio / 0.50) * 45);
+            }
+
+            handleDetectionScore(matchScore);
+        }
+
+        // Run CV loop at 15 FPS (smooth & battery-efficient)
+        setInterval(processCVFrame, 66);
+
+        function handleDetectionScore(score) {
+            lockConfidence = score;
+            confFill.style.width = score + '%';
+            confVal.innerText = score + '%';
+
+            if (score >= 65) {
+                lastSeenTime = Date.now();
+                if (!isTargetLocked) {
+                    lockTarget(score);
+                }
+            } else {
+                if (isTargetLocked) {
+                    // 1.2s grace period to tolerate hand jitter
+                    if (Date.now() - lastSeenTime > 1200) {
+                        unlockTarget();
+                    }
+                } else {
+                    if (score > 15) {
+                        toast.innerText = 'Analyzing signature... Align with AI & DS (AD2) sign (' + score + '% match)';
+                    }
+                }
+            }
+        }
+
+        function lockTarget(score) {
+            isTargetLocked = true;
+            reticleBox.className = 'reticle-box locked';
+            reticleTag.innerText = '✅ AI & DS (AD2) SIGN CONFIRMED';
+            camDot.className = 'live-dot locked';
+            camStatusText.innerText = 'TARGET LOCKED // AD2 TIMETABLE ACTIVE';
+            toast.className = 'instruction-toast locked';
+            toast.innerText = '🔒 AD2 Sign Confirmed (' + score + '% match)! 3D Timetable Displayed.';
+            dayBar.style.display = 'flex';
+
+            boardRoot.visible = true;
+            boardRoot.scale.set(0.1, 0.1, 0.1);
+            animateSpringScale();
+            playChirp();
+        }
+
+        function unlockTarget() {
+            isTargetLocked = false;
+            reticleBox.className = 'reticle-box';
+            reticleTag.innerText = '🎯 TARGET: AI & DS (AD2) SIGN';
+            camDot.className = 'live-dot';
+            camStatusText.innerText = 'SCANNING FOR AI & DS (AD2) SIGN';
+            toast.className = 'instruction-toast';
+            toast.innerText = '❌ Target lost. Point camera at the red Department of AI & DS (AD2) sign.';
+            dayBar.style.display = 'none';
+
+            boardRoot.visible = false;
+        }
+
+        function animateSpringScale() {
+            let s = 0.1;
+            const targetScale = 1.0;
+            const timer = setInterval(() => {
+                s += (targetScale - s) * 0.28;
+                boardRoot.scale.set(s, s, s);
+                if (Math.abs(targetScale - s) < 0.02) {
+                    boardRoot.scale.set(targetScale, targetScale, targetScale);
+                    clearInterval(timer);
+                }
+            }, 16);
         }
 
         function filterDay(day) {
@@ -744,90 +849,72 @@
 
             if (day === 'ALL') {
                 timetableMesh.scale.set(1.0, 1.0, 1.0);
-                timetableMesh.position.set(0, 0, 0.026);
+                timetableMesh.position.set(0, 0, 0.038);
                 toast.innerText = 'Showing Full College Weekly Schedule';
             } else {
                 const dayIndex = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4 }[day];
                 timetableMesh.scale.set(1.15, 1.15, 1.15);
                 const xOffset = (2 - dayIndex) * 0.32;
-                timetableMesh.position.set(xOffset, 0, 0.035);
+                timetableMesh.position.set(xOffset, 0, 0.045);
                 toast.innerText = 'Focused on ' + day + ' Lectures & Labs';
             }
             playChirp();
         }
 
-        function animateSpringScale() {
-            let s = 0.1;
-            const targetScale = 1.0;
-            const timer = setInterval(() => {
-                s += (targetScale - s) * 0.25;
-                boardRoot.scale.set(s, s, s);
-                if (Math.abs(targetScale - s) < 0.02) {
-                    boardRoot.scale.set(targetScale, targetScale, targetScale);
-                    clearInterval(timer);
-                }
-            }, 16);
-        }
-
-        function spawnFocusRing(x, y) {
-            const ring = document.createElement('div');
-            ring.className = 'focus-ring';
-            ring.style.left = x + 'px';
-            ring.style.top = y + 'px';
-            document.body.appendChild(ring);
-            setTimeout(() => ring.remove(), 600);
-        }
-
-        function resetBoard() {
-            isPlaced = false;
-            boardRoot.visible = false;
-            resetBtn.style.display = 'none';
-            document.getElementById('day-bar').style.display = 'none';
-            toast.innerText = 'Point at wall or floor, then tap screen to anchor 3D timetable.';
-        }
-
-        function onBackClick() {
-            if (isPlaced) resetBoard();
-            else alert('AR Surface Scanner active. Tap any surface to place timetable.');
+        function toggleSignModal(show) {
+            document.getElementById('sign-modal').style.display = show ? 'flex' : 'none';
         }
 
         function toggleInfo(show) {
             document.getElementById('info-modal').style.display = show ? 'flex' : 'none';
         }
 
-        // 5. Render Loop with Dynamic Hologram Animations
+        function forceLockDemo() {
+            toggleSignModal(false);
+            isSimulatedLock = true;
+            lockTarget(98);
+            toast.innerText = '⚡ Demo Lock Engaged: Department of AI & DS (AD2) Timetable Active.';
+            document.getElementById('simulate-btn').innerText = '↺ Resume Scanner';
+        }
+
+        function simulateLockToggle() {
+            if (isSimulatedLock || isTargetLocked) {
+                isSimulatedLock = false;
+                unlockTarget();
+                document.getElementById('simulate-btn').innerText = '⚡ Test Detection';
+            } else {
+                forceLockDemo();
+            }
+        }
+
+        function onBackClick() {
+            if (isTargetLocked) {
+                unlockTarget();
+            } else {
+                location.href = '../index.html';
+            }
+        }
+
+        // 3D Render Loop
         const clock = new THREE.Clock();
         function renderLoop() {
             requestAnimationFrame(renderLoop);
             const time = clock.getElapsedTime();
 
-            if (isPlaced) {
+            if (boardRoot.visible) {
                 // Subtle floating levitation
-                boardRoot.position.y = targetPos.y + Math.sin(time * 1.8) * 0.03;
+                boardRoot.position.y = Math.sin(time * 1.8) * 0.025;
 
                 // Pulsing neon emission
-                neonMat.emissiveIntensity = 0.75 + 0.25 * Math.sin(time * 2.5);
+                neonMat.emissiveIntensity = 1.1 + 0.35 * Math.sin(time * 2.5);
 
-                // Sweep the animated laser scanline up and down
-                scanline.position.y = 0.60 * Math.sin(time * 1.6);
-                scanMat.opacity = 0.35 + 0.25 * Math.cos(time * 3.2);
+                // Sweep scanline
+                scanline.position.y = 0.58 * Math.sin(time * 1.6);
+                scanMat.opacity = 0.4 + 0.25 * Math.cos(time * 3.2);
 
-                // Rotate ground hologram emitter tech rings
+                // Rotate ground emitter rings
                 innerRing.rotation.z += 0.015;
                 floorRing.rotation.z -= 0.008;
-
-                // Rotate corner gyro rings
-                cornerNodes.forEach((node, idx) => {
-                    node.children[1].rotation.z += 0.025 * (idx % 2 === 0 ? 1 : -1);
-                    node.children[2].rotation.y += 0.030 * (idx % 2 === 0 ? 1 : -1);
-                });
-
-                // Gentle drift for holographic particles
-                const posArr = particles.geometry.attributes.position.array;
-                for (let i = 1; i < particleCount * 3; i += 3) {
-                    posArr[i] += Math.sin(time + i) * 0.0015;
-                }
-                particles.geometry.attributes.position.needsUpdate = true;
             }
 
             renderer.render(scene, camera);
