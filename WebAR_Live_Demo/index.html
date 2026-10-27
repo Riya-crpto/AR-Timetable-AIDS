@@ -46,7 +46,7 @@
             pointer-events: auto;
         }
 
-        /* UI Layer */
+        /* UI Overlay */
         #ui-overlay {
             position: fixed;
             top: 0;
@@ -70,7 +70,7 @@
             gap: 8px;
         }
         .header-pill {
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.90);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(56, 189, 248, 0.45);
             border-radius: 20px;
@@ -119,10 +119,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
             flex-shrink: 0;
         }
-        .icon-btn:active {
-            transform: scale(0.92);
-            background: rgba(56, 189, 248, 0.3);
-        }
 
         /* Rescan Button (Appears only after timetable is shown) */
         .rescan-btn {
@@ -137,9 +133,6 @@
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-        }
-        .rescan-btn:active {
-            background: rgba(56, 189, 248, 0.2);
         }
 
         /* Day Tabs Bar (Appears only after timetable is shown) */
@@ -187,7 +180,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.25s ease;
         }
         /* When timetable appears, THIS SCAN SCREEN IS COMPLETELY HIDDEN */
         #scan-screen.hidden {
@@ -217,7 +210,7 @@
             height: 3px;
             background: linear-gradient(90deg, transparent, #ef4444, #ffffff, #ef4444, transparent);
             box-shadow: 0 0 16px #ef4444;
-            animation: fs-scan 2.2s ease-in-out infinite alternate;
+            animation: fs-scan 2s ease-in-out infinite alternate;
         }
         @keyframes fs-scan {
             0% { top: 10%; opacity: 0.3; }
@@ -229,7 +222,7 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.90);
             border: 1px solid rgba(239, 68, 68, 0.6);
             border-radius: 20px;
             padding: 14px 22px;
@@ -253,6 +246,45 @@
             line-height: 1.4;
         }
 
+        /* Bottom Action Controls */
+        .bottom-action-bar {
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .action-pill-btn {
+            background: rgba(15, 23, 42, 0.90);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 9px 16px;
+            border-radius: 18px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        .action-pill-btn:active {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        /* Floating Timetable Banner */
+        #timetable-banner {
+            display: none;
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.90);
+            border: 1px solid #10b981;
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #ecfdf5;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            margin: 0 auto 12px;
+        }
+
         /* Camera Banner */
         #camera-banner {
             display: none;
@@ -267,22 +299,6 @@
             z-index: 100;
             box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             text-align: center;
-        }
-
-        /* Floating Timetable Banner */
-        #timetable-banner {
-            display: none;
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.88);
-            border: 1px solid #10b981;
-            border-radius: 16px;
-            padding: 8px 16px;
-            color: #ecfdf5;
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-            margin: 0 auto 12px;
         }
 
         /* Modals */
@@ -348,7 +364,7 @@
         <div class="fs-hud-center">
             <div class="fs-target-icon">🎯</div>
             <div class="fs-tag">POINT CAMERA AT "DEPT OF AI &amp; DS (AD2)" SIGN</div>
-            <div class="fs-subtext">Whole-screen scanning active &bull; Only the red AD2 sign will unlock the timetable</div>
+            <div class="fs-subtext" id="status-subtext">Whole-screen scanning active &bull; Aim at the red AD2 sign</div>
         </div>
     </div>
 
@@ -390,6 +406,11 @@
 
         <!-- Bottom Controls -->
         <div>
+            <div class="bottom-action-bar" id="bottom-bar">
+                <button class="action-pill-btn" onclick="toggleSignModal(true)">🖼️ View Target Sign</button>
+                <button class="action-pill-btn" style="background:#0284c7; color:#fff;" onclick="revealTimetable()">⚡ Show 3D Timetable</button>
+            </div>
+
             <!-- Floating Indicator shown ONLY when timetable is visible -->
             <div id="timetable-banner">
                 ✨ Department of AI &amp; DS (AD2) 3D Timetable &bull; Room 103 / Lab 609
@@ -405,7 +426,8 @@
                 The scanner instantly recognizes <strong>ONLY THIS IMAGE</strong>. Point your camera at this sign:
             </p>
             <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" style="width:100%; border-radius:10px; border:2px solid #dc2626; margin-bottom:12px; display:block;">
-            <button class="modal-btn" onclick="toggleSignModal(false)">Close</button>
+            <button class="modal-btn" onclick="revealTimetable(); toggleSignModal(false);">⚡ Reveal 3D Timetable Now</button>
+            <button class="modal-btn" style="background:rgba(255,255,255,0.1); margin-top:6px;" onclick="toggleSignModal(false)">Close</button>
         </div>
     </div>
 
@@ -419,6 +441,8 @@
         const timetableBanner = document.getElementById('timetable-banner');
         const dayBar = document.getElementById('day-bar');
         const rescanTopBtn = document.getElementById('rescan-top-btn');
+        const bottomBar = document.getElementById('bottom-bar');
+        const statusSubtext = document.getElementById('status-subtext');
 
         let isCamActive = false;
         let isTimetableRevealed = false;
@@ -491,10 +515,10 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
         dirLight.position.set(1.5, 3.5, 2.5);
         scene.add(dirLight);
 
@@ -547,9 +571,7 @@
 
         const timetableMat = new THREE.MeshBasicMaterial({
             map: timetableTex,
-            transparent: false, // OPAQUE: Fixes the transparency depth issue! Timetable is ALWAYS visible!
-            depthWrite: true,
-            depthTest: true
+            side: THREE.DoubleSide
         });
         const timetableMesh = new THREE.Mesh(timetableGeo, timetableMat);
         timetableMesh.position.z = 0.046;
@@ -575,18 +597,13 @@
         cvCanvas.height = 80;
         const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
 
-        let consecutiveMatches = 0;
-
         function processCVFrame() {
             // Only scan when timetable is not yet revealed
-            if (isTimetableRevealed || !isCamActive || video.readyState < 2) return;
-
-            const vw = video.videoWidth;
-            const vh = video.videoHeight;
-            if (!vw || !vh) return;
+            if (isTimetableRevealed) return;
+            if (!video.videoWidth || !video.videoHeight) return;
 
             // SCAN THE ENTIRE CAMERA FEED (WHOLE SCREEN!)
-            cvCtx.drawImage(video, 0, 0, vw, vh, 0, 0, 120, 80);
+            cvCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, 120, 80);
             const frame = cvCtx.getImageData(0, 0, 120, 80);
             const data = frame.data;
             const totalPx = 120 * 80;
@@ -598,43 +615,36 @@
                 const g = data[i + 1];
                 const b = data[i + 2];
 
-                // Chromatic Red Purity Formula:
-                // Strictly matches the red AD2 sign while ignoring floors, walls, and wood
-                const rgDiff = (r - g) / (r + g + 1.0);
-                const rbDiff = (r - b) / (r + b + 1.0);
-
-                if (r > 65 && rgDiff > 0.30 && rbDiff > 0.24) {
+                // Robust Crimson Red Detector
+                if (r > 60 && (g / (r + 0.1) < 0.72) && (b / (r + 0.1) < 0.82) && (r - g >= 20)) {
                     redSignPixels++;
                 }
             }
 
             const redRatio = redSignPixels / totalPx;
 
-            // WHOLE-SCREEN THRESHOLD: If 10% or more of the entire view is the red sign -> INSTANT REVEAL!
-            if (redRatio >= 0.10) {
-                consecutiveMatches++;
-                if (consecutiveMatches >= 2) {
-                    // Only camera recognition triggers the timetable!
-                    revealTimetable();
-                }
-            } else {
-                consecutiveMatches = Math.max(0, consecutiveMatches - 1);
+            // Update live debug message
+            if (redRatio > 0.02) {
+                statusSubtext.innerText = 'Analyzing red sign (' + Math.round(redRatio * 100) + '% detected)...';
+            }
+
+            // WHOLE-SCREEN THRESHOLD: If 7% or more of the entire view is the red sign -> INSTANT REVEAL!
+            if (redRatio >= 0.07) {
+                revealTimetable();
             }
         }
 
         // Run scanner at 20 FPS for instant detection
         setInterval(processCVFrame, 50);
 
-        // NOTICE: User screen touching/tapping DOES NOT show timetable!
-        // Timetable is ONLY shown by the camera scanner recognizing the sign.
-
         // REVEAL TIMETABLE: Hides scan screen completely and displays the 3D timetable
         function revealTimetable() {
             if (isTimetableRevealed) return;
             isTimetableRevealed = true;
 
-            // 1. COMPLETELY HIDE THE SCANNING SCREEN & VIEWING BRACKETS!
+            // 1. COMPLETELY HIDE THE SCANNING SCREEN & BUTTONS!
             scanScreen.classList.add('hidden');
+            bottomBar.style.display = 'none';
 
             // 2. UPDATE TOP BAR
             camDot.className = 'live-dot active';
@@ -645,20 +655,20 @@
 
             // 3. SHOW 3D TIMETABLE (ALL DAYS ACTIVE & FULLY VISIBLE)
             boardRoot.visible = true;
+            boardRoot.scale.set(1.0, 1.0, 1.0);
             timetableMesh.visible = true;
             filterDay('ALL');
 
-            boardRoot.scale.set(0.1, 0.1, 0.1);
-            animateSpringScale();
             playChirp();
         }
 
         function resetToScanMode() {
             isTimetableRevealed = false;
-            consecutiveMatches = 0;
 
             // 1. BRING BACK FULL-SCREEN SCAN OVERLAY
             scanScreen.classList.remove('hidden');
+            bottomBar.style.display = 'flex';
+            statusSubtext.innerText = 'Whole-screen scanning active • Aim at the red AD2 sign';
 
             // 2. RESET TOP BAR
             camDot.className = 'live-dot';
@@ -671,26 +681,13 @@
             boardRoot.visible = false;
         }
 
-        function animateSpringScale() {
-            let s = 0.1;
-            const targetScale = 1.0;
-            const timer = setInterval(() => {
-                s += (targetScale - s) * 0.32;
-                boardRoot.scale.set(s, s, s);
-                if (Math.abs(targetScale - s) < 0.02) {
-                    boardRoot.scale.set(targetScale, targetScale, targetScale);
-                    clearInterval(timer);
-                }
-            }, 16);
-        }
-
         // Day Filtering: Timetable is ALWAYS 100% visible in ALL DAYS
         function filterDay(day) {
             document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
             const btn = document.getElementById('tab-' + day);
             if (btn) btn.classList.add('active');
 
-            timetableMesh.visible = true; // ALWAYS GUARANTEE VISIBILITY
+            timetableMesh.visible = true;
 
             if (day === 'ALL') {
                 timetableMesh.scale.set(1.0, 1.0, 1.0);
