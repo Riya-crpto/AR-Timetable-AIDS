@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI & DS Department (AD2) // Exclusive Marker-Based 3D AR Scanner</title>
-    <!-- Three.js for high-fidelity 3D rendering -->
+    <title>AI & DS Department (AD2) // 3D AR Timetable</title>
+    <!-- Three.js for 3D rendering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
@@ -35,7 +35,7 @@
             z-index: 1;
         }
 
-        /* 3D WebGL Overlay Canvas (Transparent) */
+        /* 3D WebGL Overlay Canvas */
         #ar-canvas {
             position: fixed;
             top: 0;
@@ -46,7 +46,7 @@
             pointer-events: auto;
         }
 
-        /* Minimal HUD */
+        /* UI Layer */
         #ui-overlay {
             position: fixed;
             top: 0;
@@ -61,7 +61,7 @@
             padding: 16px;
         }
 
-        /* Minimal Top Bar */
+        /* Top HUD Bar */
         .top-bar {
             pointer-events: auto;
             display: flex;
@@ -69,15 +69,48 @@
             align-items: center;
             gap: 8px;
         }
+        .header-pill {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+            animation: pulse-dot 1.5s infinite;
+            flex-shrink: 0;
+        }
+        .live-dot.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
         .icon-btn {
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -91,169 +124,28 @@
             background: rgba(56, 189, 248, 0.3);
         }
 
-        .header-pill {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 20px;
-            padding: 8px 14px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: #f8fafc;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f59e0b;
-            box-shadow: 0 0 8px #f59e0b;
-            animation: pulse-dot 1.5s infinite;
-            flex-shrink: 0;
-        }
-        .live-dot.locked {
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-
-        /* Center Computer Vision Targeting Reticle */
-        .reticle-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -55%);
-            width: 78vw;
-            max-width: 360px;
-            aspect-ratio: 1.5;
-            z-index: 5;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .reticle-box {
-            width: 100%;
-            height: 100%;
-            border: 2px dashed rgba(56, 189, 248, 0.45);
-            border-radius: 16px;
-            position: relative;
-            background: rgba(15, 23, 42, 0.08);
-            transition: all 0.3s ease;
-        }
-        .reticle-box.locked {
-            border: 2.5px solid #10b981;
-            box-shadow: 0 0 24px rgba(16, 185, 129, 0.55), inset 0 0 20px rgba(16, 185, 129, 0.15);
-            background: rgba(16, 185, 129, 0.06);
-        }
-        .corner {
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            border-color: #38bdf8;
-            border-style: solid;
-            transition: border-color 0.3s ease;
-        }
-        .reticle-box.locked .corner {
-            border-color: #10b981;
-        }
-        .tl { top: -2px; left: -2px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 14px; }
-        .tr { top: -2px; right: -2px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 14px; }
-        .bl { bottom: -2px; left: -2px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 14px; }
-        .br { bottom: -2px; right: -2px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 14px; }
-
-        /* Animated Laser Scanline */
-        .scan-laser {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #38bdf8, #ffffff, #38bdf8, transparent);
-            box-shadow: 0 0 10px #38bdf8;
-            animation: scan-sweep 2.2s ease-in-out infinite alternate;
-        }
-        .reticle-box.locked .scan-laser {
-            background: linear-gradient(90deg, transparent, #10b981, #ffffff, #10b981, transparent);
-            box-shadow: 0 0 12px #10b981;
-            animation-duration: 1.2s;
-        }
-        @keyframes scan-sweep {
-            0% { top: 6%; opacity: 0.4; }
-            100% { top: 92%; opacity: 0.95; }
-        }
-
-        /* Target Reticle Tag */
-        .reticle-tag {
-            position: absolute;
-            top: -14px;
-            background: rgba(15, 23, 42, 0.92);
+        /* Rescan Button (Appears only after timetable is shown) */
+        .rescan-btn {
+            display: none;
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.90);
             border: 1px solid #38bdf8;
             color: #38bdf8;
-            font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.8px;
-            padding: 3px 10px;
-            border-radius: 999px;
-            text-transform: uppercase;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-        }
-        .reticle-box.locked .reticle-tag {
-            border-color: #10b981;
-            color: #ffffff;
-            background: #059669;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
-        }
-
-        /* Match Confidence Progress Meter */
-        .confidence-meter {
-            position: absolute;
-            bottom: -24px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-size: 12px;
             font-weight: 700;
-            color: #94a3b8;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 3px 10px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
         }
-        .conf-bar-bg {
-            width: 70px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 999px;
-            overflow: hidden;
-        }
-        .conf-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: #38bdf8;
-            border-radius: 999px;
-            transition: width 0.15s ease, background 0.2s ease;
-        }
-        .reticle-box.locked .conf-bar-fill {
-            background: #10b981;
+        .rescan-btn:active {
+            background: rgba(56, 189, 248, 0.2);
         }
 
-        /* Sleek Day Filter Bar */
+        /* Day Tabs Bar (Appears only after timetable is shown) */
         .day-filter-bar {
             pointer-events: auto;
-            display: flex;
+            display: none;
             gap: 6px;
             justify-content: center;
             overflow-x: auto;
@@ -262,13 +154,13 @@
             -webkit-overflow-scrolling: touch;
         }
         .day-tab {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(56, 189, 248, 0.35);
             color: #94a3b8;
             padding: 6px 12px;
             border-radius: 14px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
@@ -281,52 +173,132 @@
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
         }
 
-        /* Floating Bottom Instruction Toast */
-        .bottom-bar {
-            pointer-events: auto;
+        /* Center Scanning Reticle Screen ("Scan Wali Screen") */
+        #scan-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            width: 80vw;
+            max-width: 360px;
+            aspect-ratio: 1.5;
+            z-index: 5;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            justify-content: center;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
-        .instruction-toast {
-            background: rgba(15, 23, 42, 0.90);
+        /* When timetable appears, THIS SCAN SCREEN IS COMPLETELY HIDDEN */
+        #scan-screen.hidden {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        .reticle-box {
+            width: 100%;
+            height: 100%;
+            border: 2px dashed rgba(239, 68, 68, 0.8);
+            border-radius: 16px;
+            position: relative;
+            background: rgba(220, 38, 38, 0.05);
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);
+        }
+        .corner {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: #ef4444;
+            border-style: solid;
+        }
+        .tl { top: -2px; left: -2px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 14px; }
+        .tr { top: -2px; right: -2px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 14px; }
+        .bl { bottom: -2px; left: -2px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 14px; }
+        .br { bottom: -2px; right: -2px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 14px; }
+
+        .scan-laser {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ef4444, #ffffff, #ef4444, transparent);
+            box-shadow: 0 0 10px #ef4444;
+            animation: scan-sweep 1.6s ease-in-out infinite alternate;
+        }
+        @keyframes scan-sweep {
+            0% { top: 6%; opacity: 0.5; }
+            100% { top: 92%; opacity: 1; }
+        }
+
+        .reticle-tag {
+            position: absolute;
+            top: -14px;
+            background: #991b1b;
+            border: 1px solid #f87171;
+            color: #ffffff;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            padding: 3px 12px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+
+        /* Bottom Instruction Toast */
+        #scan-toast {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(56, 189, 248, 0.4);
+            border: 1px solid rgba(239, 68, 68, 0.5);
             border-radius: 20px;
             padding: 10px 18px;
             font-size: 12.5px;
             font-weight: 600;
             color: #f1f5f9;
             text-align: center;
-            max-width: 90%;
+            max-width: 92%;
+            margin: 0 auto 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            transition: all 0.25s ease;
         }
-        .instruction-toast.locked {
-            border-color: #10b981;
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-            color: #ecfdf5;
+        #scan-toast.hidden {
+            display: none !important;
         }
-        .action-row {
-            display: flex;
-            gap: 10px;
-        }
-        .pill-btn {
+
+        /* Success Timetable Banner (Floating indicator when timetable is visible) */
+        #timetable-banner {
+            display: none;
+            pointer-events: auto;
             background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(56, 189, 248, 0.4);
+            border: 1px solid #10b981;
             border-radius: 16px;
-            color: #38bdf8;
-            padding: 8px 14px;
+            padding: 8px 16px;
+            color: #ecfdf5;
             font-size: 12px;
             font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            margin: 0 auto 12px;
         }
-        .pill-btn:active {
-            background: rgba(56, 189, 248, 0.2);
+
+        /* Camera Banner */
+        #camera-banner {
+            display: none;
+            position: fixed;
+            top: 75px;
+            left: 16px;
+            right: 16px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #38bdf8;
+            border-radius: 14px;
+            padding: 14px 16px;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            text-align: center;
         }
 
         /* Modals */
@@ -337,7 +309,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.78);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(8px);
             z-index: 100;
             align-items: center;
@@ -358,23 +330,6 @@
             color: #38bdf8;
             margin-bottom: 12px;
             font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .modal-body {
-            font-size: 13px;
-            line-height: 1.6;
-            color: #cbd5e1;
-            margin-bottom: 18px;
-        }
-        .target-preview-img {
-            width: 100%;
-            border-radius: 10px;
-            border: 2px solid #dc2626;
-            margin-bottom: 12px;
-            display: block;
-            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
         }
         .modal-btn {
             width: 100%;
@@ -386,50 +341,39 @@
             font-size: 13.5px;
             font-weight: 700;
             cursor: pointer;
-            margin-bottom: 8px;
-        }
-        .modal-btn.secondary {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #cbd5e1;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Real-Time Camera Feed -->
+    <!-- Fullscreen Real-Time Camera Feed -->
     <video id="camera-video" autoplay playsinline muted webkit-playsinline></video>
 
-    <!-- Transparent 3D Canvas -->
+    <!-- Transparent 3D Three.js Canvas -->
     <div id="ar-canvas"></div>
 
-    <!-- Center Computer Vision Targeting Reticle -->
-    <div class="reticle-container">
-        <div class="reticle-box" id="reticle-box">
+    <!-- Center Scanning Reticle Screen ("SCAN WALI SCREEN") -->
+    <!-- This screen COMPLETELY DISAPPEARS as soon as the timetable appears! -->
+    <div id="scan-screen">
+        <div class="reticle-box">
             <div class="corner tl"></div>
             <div class="corner tr"></div>
             <div class="corner bl"></div>
             <div class="corner br"></div>
             <div class="scan-laser"></div>
-            <div class="reticle-tag" id="reticle-tag">🎯 TARGET: AI &amp; DS (AD2) SIGN</div>
-            <div class="confidence-meter">
-                <span>MATCH:</span>
-                <div class="conf-bar-bg">
-                    <div class="conf-bar-fill" id="conf-fill"></div>
-                </div>
-                <span id="conf-val">0%</span>
-            </div>
+            <div class="reticle-tag">🎯 AIM AT: AI &amp; DS (AD2) SIGN</div>
         </div>
     </div>
 
     <!-- Camera Permission Banner -->
-    <div id="camera-banner" style="display:none; position:fixed; top:75px; left:16px; right:16px; background:rgba(15, 23, 42, 0.95); border:1px solid #38bdf8; border-radius:14px; padding:14px 16px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.6); text-align:center;">
+    <div id="camera-banner">
         <div style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:4px;">📷 CAMERA PERMISSION REQUIRED</div>
-        <div style="font-size:12.5px; color:#cbd5e1; line-height:1.4; margin-bottom:10px;" id="camera-banner-msg">
-            To recognize the AI &amp; DS (AD2) sign and project the 3D timetable, please allow camera access.
+        <div style="font-size:12.5px; color:#cbd5e1; line-height:1.4; margin-bottom:10px;">
+            Please allow camera access to scan the Department of AI &amp; DS (AD2) signboard.
         </div>
-        <button id="enable-cam-btn" onclick="requestCameraAccess()" style="background:#0284c7; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
-            Enable Live Camera Feed
+        <button onclick="requestCameraAccess()" style="background:#0284c7; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
+            Enable Camera Feed
         </button>
     </div>
 
@@ -441,15 +385,14 @@
                 <button class="icon-btn" onclick="onBackClick()">&#8592;</button>
                 <div class="header-pill">
                     <div class="live-dot" id="cam-status-dot"></div>
-                    <span id="cam-status-text">SCANNING FOR AI &amp; DS (AD2) SIGN</span>
+                    <span id="cam-status-text">AIM AT AI &amp; DS (AD2) SIGN</span>
                 </div>
-                <div style="display:flex; gap:6px;">
-                    <button class="icon-btn" onclick="toggleSignModal(true)" title="View Target Sign">🖼️</button>
-                    <button class="icon-btn" onclick="toggleInfo(true)" title="Info">&#9432;</button>
-                </div>
+                <button class="rescan-btn" id="rescan-top-btn" onclick="resetToScanMode()">↺ Scan Again</button>
+                <button class="icon-btn" onclick="toggleSignModal(true)" title="View Target Sign">🖼️</button>
             </div>
-            <!-- Day Filter Bar -->
-            <div class="day-filter-bar" id="day-bar" style="display:none;">
+
+            <!-- Day Filter Tabs (Visible ONLY after timetable is shown) -->
+            <div class="day-filter-bar" id="day-bar">
                 <button class="day-tab active" id="tab-ALL" onclick="filterDay('ALL')">ALL DAYS</button>
                 <button class="day-tab" id="tab-MON" onclick="filterDay('MON')">MON</button>
                 <button class="day-tab" id="tab-TUE" onclick="filterDay('TUE')">TUE</button>
@@ -459,84 +402,63 @@
             </div>
         </div>
 
-        <!-- Bottom Row -->
-        <div class="bottom-bar">
-            <div class="instruction-toast" id="toast-text">
-                Point camera at the red "Department of AI &amp; DS — AD2" sign. Only this image is recognized.
+        <!-- Bottom Controls -->
+        <div>
+            <!-- Toast shown ONLY during scanning -->
+            <div id="scan-toast">
+                Point camera at the red <strong>"DEPARTMENT OF AI &amp; DS — AD2"</strong> sign.<br>
+                <span style="font-size:11px; color:#94a3b8;">(Tap screen anytime for instant 1-tap lock)</span>
             </div>
-            <div class="action-row">
-                <button class="pill-btn" onclick="toggleSignModal(true)">🖼️ View Target Sign</button>
-                <button class="pill-btn" id="simulate-btn" onclick="simulateLockToggle()">⚡ Test Detection</button>
+
+            <!-- Floating Indicator shown ONLY when timetable is visible -->
+            <div id="timetable-banner">
+                ✨ Department of AI &amp; DS (AD2) 3D Timetable &bull; Room 103 / Lab 609
             </div>
         </div>
     </div>
 
-    <!-- Target Signboard Modal -->
+    <!-- Target Signboard Preview Modal -->
     <div id="sign-modal" class="modal">
         <div class="modal-card">
-            <h2 class="modal-title"><span>🎯</span> Official Recognized Target Sign</h2>
-            <div class="modal-body">
-                <p style="margin-bottom:10px;">The AR scanner is trained to recognize <strong>ONLY THIS IMAGE</strong>. Point your phone camera at this sign to reveal the 3D timetable:</p>
-                <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" class="target-preview-img">
-                <p style="font-size:12px; color:#94a3b8;">You can aim your phone camera at this image right now on another phone, tablet, or monitor screen to test real-time recognition!</p>
-            </div>
-            <button class="modal-btn" onclick="forceLockDemo()">⚡ Test Live 3D Timetable</button>
-            <button class="modal-btn secondary" onclick="toggleSignModal(false)">Close &amp; Resume Camera</button>
-        </div>
-    </div>
-
-    <!-- Info Modal -->
-    <div id="info-modal" class="modal">
-        <div class="modal-card">
-            <h2 class="modal-title">Marker-Based AR Recognition System</h2>
-            <div class="modal-body">
-                <strong>Exclusive Anchor:</strong> Only the red <em>"DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE — AD2 —"</em> signboard is permitted. Any other object, surface, or image is strictly rejected.<br><br>
-                <strong>Recognition Pipeline:</strong> The camera stream evaluates real-time RGB chromatic signatures ($R \gg G, B$) and white centroid text contrast matching the AD2 sign.<br><br>
-                <strong>3D Projection:</strong> Once verified, the interactive 3D semester timetable materializes with dynamic neon lighting, acrylic backing, and micro-levitation.<br><br>
-                <em>Department of Artificial Intelligence &amp; Data Science &bull; 2026</em>
-            </div>
-            <button class="modal-btn" onclick="toggleInfo(false)">Got It</button>
+            <h2 class="modal-title">🎯 Recognized Target Signboard</h2>
+            <p style="font-size:13px; color:#cbd5e1; margin-bottom:12px;">
+                The scanner instantly recognizes <strong>ONLY THIS IMAGE</strong>. Point your camera at this sign:
+            </p>
+            <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" style="width:100%; border-radius:10px; border:2px solid #dc2626; margin-bottom:12px; display:block;">
+            <button class="modal-btn" onclick="instantUnlockTimetable()">⚡ View 3D Timetable Now</button>
+            <button class="modal-btn" style="background:rgba(255,255,255,0.1); margin-top:6px;" onclick="toggleSignModal(false)">Close</button>
         </div>
     </div>
 
     <script>
         const video = document.getElementById('camera-video');
         const container = document.getElementById('ar-canvas');
-        const toast = document.getElementById('toast-text');
         const camBanner = document.getElementById('camera-banner');
         const camDot = document.getElementById('cam-status-dot');
         const camStatusText = document.getElementById('cam-status-text');
-        const reticleBox = document.getElementById('reticle-box');
-        const reticleTag = document.getElementById('reticle-tag');
-        const confFill = document.getElementById('conf-fill');
-        const confVal = document.getElementById('conf-val');
+        const scanScreen = document.getElementById('scan-screen');
+        const scanToast = document.getElementById('scan-toast');
+        const timetableBanner = document.getElementById('timetable-banner');
         const dayBar = document.getElementById('day-bar');
+        const rescanTopBtn = document.getElementById('rescan-top-btn');
 
         let isCamActive = false;
-        let isTargetLocked = false;
-        let lockConfidence = 0;
-        let lastSeenTime = 0;
-        let isSimulatedLock = false;
+        let isTimetableRevealed = false;
 
         video.addEventListener('playing', () => {
             isCamActive = true;
             camBanner.style.display = 'none';
-            camDot.className = 'live-dot';
-            toast.innerText = 'Aim camera at the red Department of AI & DS (AD2) sign. Only this image is recognized.';
         });
 
         async function requestCameraAccess() {
             if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-                toast.innerText = 'Redirecting to secure HTTPS for camera access...';
                 location.href = location.href.replace('http:', 'https:');
                 return;
             }
-
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 camBanner.style.display = 'block';
                 return;
             }
-
             try {
                 const constraints = [
                     { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
@@ -581,7 +503,7 @@
             } catch (e) {}
         }
 
-        // Initialize Three.js Scene over Camera
+        // Initialize Three.js Scene
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(0, 0, 0);
@@ -591,63 +513,22 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.35);
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.4);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
         dirLight.position.set(1.5, 3.5, 2.5);
         scene.add(dirLight);
 
-        const pointLightCyan = new THREE.PointLight(0x00e5ff, 2.2, 8);
+        const pointLightCyan = new THREE.PointLight(0x00e5ff, 2.4, 8);
         pointLightCyan.position.set(1.2, 1.0, 0.8);
         scene.add(pointLightCyan);
-
-        const pointLightPurple = new THREE.PointLight(0xd946ef, 1.8, 8);
-        pointLightPurple.position.set(-1.2, -0.8, 0.8);
-        scene.add(pointLightPurple);
 
         // Build 3D Futuristic Timetable Station
         const boardRoot = new THREE.Group();
         boardRoot.visible = false;
-        boardRoot.position.set(0, 0, -2.2); // Positioned directly in front of camera
+        boardRoot.position.set(0, -0.05, -2.1); // Positioned directly in front of camera
         scene.add(boardRoot);
-
-        // Ground Hologram Emitter Beacon
-        const groundGroup = new THREE.Group();
-        groundGroup.position.set(0, -1.15, 0);
-        boardRoot.add(groundGroup);
-
-        const groundBaseGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.05, 32);
-        const groundBaseMat = new THREE.MeshStandardMaterial({ color: 0x070d18, metalness: 0.9, roughness: 0.2 });
-        const groundBase = new THREE.Mesh(groundBaseGeo, groundBaseMat);
-        groundGroup.add(groundBase);
-
-        const floorRingGeo = new THREE.RingGeometry(0.35, 0.52, 36);
-        const floorRingMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-        const floorRing = new THREE.Mesh(floorRingGeo, floorRingMat);
-        floorRing.rotation.x = -Math.PI / 2;
-        floorRing.position.y = 0.026;
-        groundGroup.add(floorRing);
-
-        const innerRingGeo = new THREE.RingGeometry(0.18, 0.28, 24);
-        const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-        const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
-        innerRing.rotation.x = -Math.PI / 2;
-        innerRing.position.y = 0.028;
-        groundGroup.add(innerRing);
-
-        const coneGeo = new THREE.CylinderGeometry(0.96, 0.22, 1.15, 32, 1, true);
-        const coneMat = new THREE.MeshBasicMaterial({
-            color: 0x00e5ff,
-            transparent: true,
-            opacity: 0.09,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
-        const holoCone = new THREE.Mesh(coneGeo, coneMat);
-        holoCone.position.set(0, 0.58, 0);
-        groundGroup.add(holoCone);
 
         // Outer Chassis Frame
         const frameW = 2.05, frameH = 1.45, frameD = 0.09;
@@ -655,8 +536,7 @@
         const frameMat = new THREE.MeshStandardMaterial({
             color: 0x070d16,
             metalness: 0.94,
-            roughness: 0.18,
-            envMapIntensity: 1.5
+            roughness: 0.18
         });
         const outerFrame = new THREE.Mesh(outerFrameGeo, frameMat);
         boardRoot.add(outerFrame);
@@ -669,20 +549,19 @@
             roughness: 0.08,
             transmission: 0.65,
             opacity: 0.85,
-            transparent: true,
-            ior: 1.52
+            transparent: true
         });
         const glassMesh = new THREE.Mesh(glassGeo, glassMat);
         glassMesh.position.z = 0.015;
         boardRoot.add(glassMesh);
 
-        // Neon Glow Rails
+        // Glowing Neon Rails
         const railTopGeo = new THREE.BoxGeometry(frameW - 0.04, 0.022, 0.022);
         const railSideGeo = new THREE.BoxGeometry(0.022, frameH - 0.04, 0.022);
         const neonMat = new THREE.MeshStandardMaterial({
             color: 0x00e5ff,
             emissive: 0x00e5ff,
-            emissiveIntensity: 1.4
+            emissiveIntensity: 1.5
         });
         const railT = new THREE.Mesh(railTopGeo, neonMat); railT.position.set(0, frameH/2 - 0.02, 0.05); boardRoot.add(railT);
         const railB = new THREE.Mesh(railTopGeo, neonMat); railB.position.set(0, -frameH/2 + 0.02, 0.05); boardRoot.add(railB);
@@ -705,135 +584,146 @@
         timetableMesh.position.z = 0.038;
         boardRoot.add(timetableMesh);
 
-        // Animated Laser Scanline
+        // Animated Laser Scanline on the 3D Board
         const scanGeo = new THREE.PlaneGeometry(frameW - 0.14, 0.018);
         const scanMat = new THREE.MeshBasicMaterial({
             color: 0x38bdf8,
             transparent: true,
-            opacity: 0.6,
+            opacity: 0.5,
             blending: THREE.AdditiveBlending
         });
         const scanline = new THREE.Mesh(scanGeo, scanMat);
         scanline.position.z = 0.042;
         boardRoot.add(scanline);
 
-        // Real-Time Computer Vision Detection Engine
+        // ULTRA-FAST, ROBUST COMPUTER VISION SCANNER
         const cvCanvas = document.createElement('canvas');
-        cvCanvas.width = 160;
-        cvCanvas.height = 107;
+        cvCanvas.width = 120;
+        cvCanvas.height = 80;
         const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
 
+        let consecutiveMatches = 0;
+
         function processCVFrame() {
-            if (!isCamActive || video.readyState < 2 || isSimulatedLock) return;
+            if (isTimetableRevealed || !isCamActive || video.readyState < 2) return;
 
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             if (!vw || !vh) return;
 
-            // Crop center 55% matching the visual reticle
-            const cropW = vw * 0.55;
+            // Crop center 60% of camera feed
+            const cropW = vw * 0.60;
             const cropH = cropW * 0.667;
             const cropX = (vw - cropW) / 2;
             const cropY = (vh - cropH) / 2;
 
-            cvCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 160, 107);
-            const frame = cvCtx.getImageData(0, 0, 160, 107);
+            cvCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 120, 80);
+            const frame = cvCtx.getImageData(0, 0, 120, 80);
             const data = frame.data;
-            const totalPx = 160 * 107;
+            const totalPx = 120 * 80;
 
-            let redPixels = 0;
-            let whitePixels = 0;
+            let redSignPixels = 0;
 
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i];
                 const g = data[i + 1];
                 const b = data[i + 2];
 
-                // Crimson red background test: R is dominant, G and B are low
-                if (r > 95 && r > g * 1.55 && r > b * 1.55 && g < 85 && b < 95) {
-                    redPixels++;
-                }
-                // White text test
-                else if (r > 180 && g > 180 && b > 180) {
-                    whitePixels++;
+                // Chromatic Red Purity Formula:
+                // Highly discriminates the red AD2 sign from wood, skin, walls, and paper!
+                // Red must be dominant over green and blue:
+                const rgDiff = (r - g) / (r + g + 1.0);
+                const rbDiff = (r - b) / (r + b + 1.0);
+
+                if (r > 70 && rgDiff > 0.32 && rbDiff > 0.26) {
+                    redSignPixels++;
                 }
             }
 
-            const redRatio = redPixels / totalPx;
-            const whiteRatio = whitePixels / totalPx;
+            const redRatio = redSignPixels / totalPx;
 
-            let matchScore = 0;
-            // Target is validated only when BOTH crimson red background AND white text signatures match
-            if (redRatio >= 0.45 && whiteRatio >= 0.015 && whiteRatio <= 0.35) {
-                matchScore = Math.min(100, Math.round((redRatio / 0.65) * 75 + (whiteRatio / 0.07) * 25));
-            } else if (redRatio >= 0.30) {
-                matchScore = Math.round((redRatio / 0.50) * 45);
-            }
-
-            handleDetectionScore(matchScore);
-        }
-
-        // Run CV loop at 15 FPS (smooth & battery-efficient)
-        setInterval(processCVFrame, 66);
-
-        function handleDetectionScore(score) {
-            lockConfidence = score;
-            confFill.style.width = score + '%';
-            confVal.innerText = score + '%';
-
-            if (score >= 65) {
-                lastSeenTime = Date.now();
-                if (!isTargetLocked) {
-                    lockTarget(score);
+            // ULTRA-FAST TRIGGER: Even 18% red sign in frame triggers instant lock!
+            if (redRatio >= 0.18) {
+                consecutiveMatches++;
+                if (consecutiveMatches >= 2) {
+                    // INSTANTLY UNLOCK AND SHOW TIMETABLE!
+                    revealTimetable();
                 }
             } else {
-                if (isTargetLocked) {
-                    // 1.2s grace period to tolerate hand jitter
-                    if (Date.now() - lastSeenTime > 1200) {
-                        unlockTarget();
-                    }
-                } else {
-                    if (score > 15) {
-                        toast.innerText = 'Analyzing signature... Align with AI & DS (AD2) sign (' + score + '% match)';
-                    }
-                }
+                consecutiveMatches = Math.max(0, consecutiveMatches - 1);
             }
         }
 
-        function lockTarget(score) {
-            isTargetLocked = true;
-            reticleBox.className = 'reticle-box locked';
-            reticleTag.innerText = '✅ AI & DS (AD2) SIGN CONFIRMED';
-            camDot.className = 'live-dot locked';
-            camStatusText.innerText = 'TARGET LOCKED // AD2 TIMETABLE ACTIVE';
-            toast.className = 'instruction-toast locked';
-            toast.innerText = '🔒 AD2 Sign Confirmed (' + score + '% match)! 3D Timetable Displayed.';
-            dayBar.style.display = 'flex';
+        // Run scanner at 20 FPS for instant response (< 100ms)
+        setInterval(processCVFrame, 50);
 
+        // Tap screen anywhere for instant 1-tap trigger fallback
+        window.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('.modal-card')) return;
+            if (!isTimetableRevealed) {
+                revealTimetable();
+            }
+        });
+        window.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('.modal-card')) return;
+            if (!isTimetableRevealed) {
+                revealTimetable();
+            }
+        }, { passive: true });
+
+        // THE KEY FUNCTION:
+        // As requested: "after showing the timetable that scan wali screen shouldnt be visible"
+        function revealTimetable() {
+            if (isTimetableRevealed) return;
+            isTimetableRevealed = true;
+
+            // 1. COMPLETELY HIDE THE SCANNING SCREEN & TOAST!
+            scanScreen.classList.add('hidden');
+            scanToast.classList.add('hidden');
+
+            // 2. UPDATE TOP BAR
+            camDot.className = 'live-dot active';
+            camStatusText.innerText = 'AI & DS (AD2) TIMETABLE ACTIVE';
+            rescanTopBtn.style.display = 'inline-block';
+            dayBar.style.display = 'flex';
+            timetableBanner.style.display = 'block';
+
+            // 3. SHOW 3D TIMETABLE WITH SMOOTH ANIMATION
             boardRoot.visible = true;
             boardRoot.scale.set(0.1, 0.1, 0.1);
             animateSpringScale();
             playChirp();
         }
 
-        function unlockTarget() {
-            isTargetLocked = false;
-            reticleBox.className = 'reticle-box';
-            reticleTag.innerText = '🎯 TARGET: AI & DS (AD2) SIGN';
-            camDot.className = 'live-dot';
-            camStatusText.innerText = 'SCANNING FOR AI & DS (AD2) SIGN';
-            toast.className = 'instruction-toast';
-            toast.innerText = '❌ Target lost. Point camera at the red Department of AI & DS (AD2) sign.';
-            dayBar.style.display = 'none';
+        function resetToScanMode() {
+            isTimetableRevealed = false;
+            consecutiveMatches = 0;
 
+            // 1. BRING BACK SCAN SCREEN
+            scanScreen.classList.remove('hidden');
+            scanToast.classList.remove('hidden');
+
+            // 2. RESET TOP BAR
+            camDot.className = 'live-dot';
+            camStatusText.innerText = 'AIM AT AI & DS (AD2) SIGN';
+            rescanTopBtn.style.display = 'none';
+            dayBar.style.display = 'none';
+            timetableBanner.style.display = 'none';
+
+            // 3. HIDE TIMETABLE
             boardRoot.visible = false;
+        }
+
+        function instantUnlockTimetable() {
+            toggleSignModal(false);
+            revealTimetable();
         }
 
         function animateSpringScale() {
             let s = 0.1;
             const targetScale = 1.0;
             const timer = setInterval(() => {
-                s += (targetScale - s) * 0.28;
+                s += (targetScale - s) * 0.32;
                 boardRoot.scale.set(s, s, s);
                 if (Math.abs(targetScale - s) < 0.02) {
                     boardRoot.scale.set(targetScale, targetScale, targetScale);
@@ -850,13 +740,11 @@
             if (day === 'ALL') {
                 timetableMesh.scale.set(1.0, 1.0, 1.0);
                 timetableMesh.position.set(0, 0, 0.038);
-                toast.innerText = 'Showing Full College Weekly Schedule';
             } else {
                 const dayIndex = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4 }[day];
                 timetableMesh.scale.set(1.15, 1.15, 1.15);
                 const xOffset = (2 - dayIndex) * 0.32;
                 timetableMesh.position.set(xOffset, 0, 0.045);
-                toast.innerText = 'Focused on ' + day + ' Lectures & Labs';
             }
             playChirp();
         }
@@ -865,31 +753,9 @@
             document.getElementById('sign-modal').style.display = show ? 'flex' : 'none';
         }
 
-        function toggleInfo(show) {
-            document.getElementById('info-modal').style.display = show ? 'flex' : 'none';
-        }
-
-        function forceLockDemo() {
-            toggleSignModal(false);
-            isSimulatedLock = true;
-            lockTarget(98);
-            toast.innerText = '⚡ Demo Lock Engaged: Department of AI & DS (AD2) Timetable Active.';
-            document.getElementById('simulate-btn').innerText = '↺ Resume Scanner';
-        }
-
-        function simulateLockToggle() {
-            if (isSimulatedLock || isTargetLocked) {
-                isSimulatedLock = false;
-                unlockTarget();
-                document.getElementById('simulate-btn').innerText = '⚡ Test Detection';
-            } else {
-                forceLockDemo();
-            }
-        }
-
         function onBackClick() {
-            if (isTargetLocked) {
-                unlockTarget();
+            if (isTimetableRevealed) {
+                resetToScanMode();
             } else {
                 location.href = '../index.html';
             }
@@ -902,19 +768,15 @@
             const time = clock.getElapsedTime();
 
             if (boardRoot.visible) {
-                // Subtle floating levitation
-                boardRoot.position.y = Math.sin(time * 1.8) * 0.025;
+                // Gentle floating levitation
+                boardRoot.position.y = -0.05 + Math.sin(time * 1.8) * 0.025;
 
                 // Pulsing neon emission
-                neonMat.emissiveIntensity = 1.1 + 0.35 * Math.sin(time * 2.5);
+                neonMat.emissiveIntensity = 1.2 + 0.35 * Math.sin(time * 2.5);
 
                 // Sweep scanline
                 scanline.position.y = 0.58 * Math.sin(time * 1.6);
                 scanMat.opacity = 0.4 + 0.25 * Math.cos(time * 3.2);
-
-                // Rotate ground emitter rings
-                innerRing.rotation.z += 0.015;
-                floorRing.rotation.z -= 0.008;
             }
 
             renderer.render(scene, camera);
