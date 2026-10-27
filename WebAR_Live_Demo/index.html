@@ -154,13 +154,13 @@
             -webkit-overflow-scrolling: touch;
         }
         .day-tab {
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(56, 189, 248, 0.35);
             color: #94a3b8;
-            padding: 6px 12px;
+            padding: 7px 14px;
             border-radius: 14px;
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
@@ -173,22 +173,21 @@
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
         }
 
-        /* Center Scanning Reticle Screen ("Scan Wali Screen") */
+        /* FULL-SCREEN AR SCANNER OVERLAY ("SCAN WALI SCREEN") */
+        /* Covers the whole screen during scanning and COMPLETELY DISAPPEARS when timetable reveals */
         #scan-screen {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -55%);
-            width: 80vw;
-            max-width: 360px;
-            aspect-ratio: 1.5;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             z-index: 5;
             pointer-events: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s ease;
         }
         /* When timetable appears, THIS SCAN SCREEN IS COMPLETELY HIDDEN */
         #scan-screen.hidden {
@@ -197,92 +196,61 @@
             pointer-events: none !important;
         }
 
-        .reticle-box {
-            width: 100%;
-            height: 100%;
-            border: 2px dashed rgba(239, 68, 68, 0.8);
-            border-radius: 16px;
-            position: relative;
-            background: rgba(220, 38, 38, 0.05);
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);
-        }
-        .corner {
+        /* Whole-Screen Viewfinder Brackets */
+        .fs-corner {
             position: absolute;
-            width: 22px;
-            height: 22px;
+            width: 36px;
+            height: 36px;
             border-color: #ef4444;
             border-style: solid;
         }
-        .tl { top: -2px; left: -2px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 14px; }
-        .tr { top: -2px; right: -2px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 14px; }
-        .bl { bottom: -2px; left: -2px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 14px; }
-        .br { bottom: -2px; right: -2px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 14px; }
+        .fs-tl { top: 20px; left: 20px; border-width: 4px 0 0 4px; border-top-left-radius: 12px; }
+        .fs-tr { top: 20px; right: 20px; border-width: 4px 4px 0 0; border-top-right-radius: 12px; }
+        .fs-bl { bottom: 20px; left: 20px; border-width: 0 0 4px 4px; border-bottom-left-radius: 12px; }
+        .fs-br { bottom: 20px; right: 20px; border-width: 0 4px 4px 0; border-bottom-right-radius: 12px; }
 
-        .scan-laser {
+        /* Fullscreen Sweeping Laser Beam */
+        .fs-laser {
             position: absolute;
-            top: 0;
             left: 0;
             width: 100%;
-            height: 2px;
+            height: 3px;
             background: linear-gradient(90deg, transparent, #ef4444, #ffffff, #ef4444, transparent);
-            box-shadow: 0 0 10px #ef4444;
-            animation: scan-sweep 1.6s ease-in-out infinite alternate;
+            box-shadow: 0 0 16px #ef4444;
+            animation: fs-scan 2.2s ease-in-out infinite alternate;
         }
-        @keyframes scan-sweep {
-            0% { top: 6%; opacity: 0.5; }
-            100% { top: 92%; opacity: 1; }
+        @keyframes fs-scan {
+            0% { top: 10%; opacity: 0.3; }
+            100% { top: 88%; opacity: 0.9; }
         }
 
-        .reticle-tag {
-            position: absolute;
-            top: -14px;
-            background: #991b1b;
-            border: 1px solid #f87171;
-            color: #ffffff;
-            font-size: 10.5px;
+        .fs-hud-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            border-radius: 20px;
+            padding: 14px 22px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            text-align: center;
+            max-width: 88%;
+        }
+        .fs-target-icon {
+            font-size: 26px;
+        }
+        .fs-tag {
+            font-size: 13px;
             font-weight: 800;
             letter-spacing: 0.8px;
-            padding: 3px 12px;
-            border-radius: 999px;
+            color: #f87171;
             text-transform: uppercase;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            white-space: nowrap;
         }
-
-        /* Bottom Instruction Toast */
-        #scan-toast {
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            border-radius: 20px;
-            padding: 10px 18px;
-            font-size: 12.5px;
-            font-weight: 600;
-            color: #f1f5f9;
-            text-align: center;
-            max-width: 92%;
-            margin: 0 auto 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-        }
-        #scan-toast.hidden {
-            display: none !important;
-        }
-
-        /* Success Timetable Banner (Floating indicator when timetable is visible) */
-        #timetable-banner {
-            display: none;
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid #10b981;
-            border-radius: 16px;
-            padding: 8px 16px;
-            color: #ecfdf5;
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-            margin: 0 auto 12px;
+        .fs-subtext {
+            font-size: 11.5px;
+            color: #94a3b8;
+            line-height: 1.4;
         }
 
         /* Camera Banner */
@@ -299,6 +267,22 @@
             z-index: 100;
             box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             text-align: center;
+        }
+
+        /* Floating Timetable Banner */
+        #timetable-banner {
+            display: none;
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid #10b981;
+            border-radius: 16px;
+            padding: 8px 16px;
+            color: #ecfdf5;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            margin: 0 auto 12px;
         }
 
         /* Modals */
@@ -353,16 +337,18 @@
     <!-- Transparent 3D Three.js Canvas -->
     <div id="ar-canvas"></div>
 
-    <!-- Center Scanning Reticle Screen ("SCAN WALI SCREEN") -->
-    <!-- This screen COMPLETELY DISAPPEARS as soon as the timetable appears! -->
+    <!-- FULL-SCREEN AR SCANNER OVERLAY ("SCAN WALI SCREEN") -->
+    <!-- Covers the whole screen during scanning and COMPLETELY DISAPPEARS when timetable reveals -->
     <div id="scan-screen">
-        <div class="reticle-box">
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
-            <div class="scan-laser"></div>
-            <div class="reticle-tag">🎯 AIM AT: AI &amp; DS (AD2) SIGN</div>
+        <div class="fs-corner fs-tl"></div>
+        <div class="fs-corner fs-tr"></div>
+        <div class="fs-corner fs-bl"></div>
+        <div class="fs-corner fs-br"></div>
+        <div class="fs-laser"></div>
+        <div class="fs-hud-center">
+            <div class="fs-target-icon">🎯</div>
+            <div class="fs-tag">POINT CAMERA AT "DEPT OF AI &amp; DS (AD2)" SIGN</div>
+            <div class="fs-subtext">Whole-screen scanning active &bull; Only the red AD2 sign will unlock the timetable</div>
         </div>
     </div>
 
@@ -404,12 +390,6 @@
 
         <!-- Bottom Controls -->
         <div>
-            <!-- Toast shown ONLY during scanning -->
-            <div id="scan-toast">
-                Point camera at the red <strong>"DEPARTMENT OF AI &amp; DS — AD2"</strong> sign.<br>
-                <span style="font-size:11px; color:#94a3b8;">(Tap screen anytime for instant 1-tap lock)</span>
-            </div>
-
             <!-- Floating Indicator shown ONLY when timetable is visible -->
             <div id="timetable-banner">
                 ✨ Department of AI &amp; DS (AD2) 3D Timetable &bull; Room 103 / Lab 609
@@ -425,8 +405,7 @@
                 The scanner instantly recognizes <strong>ONLY THIS IMAGE</strong>. Point your camera at this sign:
             </p>
             <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" style="width:100%; border-radius:10px; border:2px solid #dc2626; margin-bottom:12px; display:block;">
-            <button class="modal-btn" onclick="instantUnlockTimetable()">⚡ View 3D Timetable Now</button>
-            <button class="modal-btn" style="background:rgba(255,255,255,0.1); margin-top:6px;" onclick="toggleSignModal(false)">Close</button>
+            <button class="modal-btn" onclick="toggleSignModal(false)">Close</button>
         </div>
     </div>
 
@@ -437,7 +416,6 @@
         const camDot = document.getElementById('cam-status-dot');
         const camStatusText = document.getElementById('cam-status-text');
         const scanScreen = document.getElementById('scan-screen');
-        const scanToast = document.getElementById('scan-toast');
         const timetableBanner = document.getElementById('timetable-banner');
         const dayBar = document.getElementById('day-bar');
         const rescanTopBtn = document.getElementById('rescan-top-btn');
@@ -513,47 +491,36 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.4);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
         dirLight.position.set(1.5, 3.5, 2.5);
         scene.add(dirLight);
-
-        const pointLightCyan = new THREE.PointLight(0x00e5ff, 2.4, 8);
-        pointLightCyan.position.set(1.2, 1.0, 0.8);
-        scene.add(pointLightCyan);
 
         // Build 3D Futuristic Timetable Station
         const boardRoot = new THREE.Group();
         boardRoot.visible = false;
-        boardRoot.position.set(0, -0.05, -2.1); // Positioned directly in front of camera
+        boardRoot.position.set(0, -0.05, -2.1);
         scene.add(boardRoot);
 
         // Outer Chassis Frame
-        const frameW = 2.05, frameH = 1.45, frameD = 0.09;
+        const frameW = 2.05, frameH = 1.45, frameD = 0.08;
         const outerFrameGeo = new THREE.BoxGeometry(frameW, frameH, frameD);
         const frameMat = new THREE.MeshStandardMaterial({
-            color: 0x070d16,
-            metalness: 0.94,
-            roughness: 0.18
+            color: 0x050b14,
+            metalness: 0.95,
+            roughness: 0.15
         });
         const outerFrame = new THREE.Mesh(outerFrameGeo, frameMat);
         boardRoot.add(outerFrame);
 
-        // Frosted Acrylic Backing
-        const glassGeo = new THREE.BoxGeometry(frameW - 0.06, frameH - 0.06, 0.03);
-        const glassMat = new THREE.MeshPhysicalMaterial({
-            color: 0x0284c7,
-            metalness: 0.1,
-            roughness: 0.08,
-            transmission: 0.65,
-            opacity: 0.85,
-            transparent: true
-        });
-        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-        glassMesh.position.z = 0.015;
-        boardRoot.add(glassMesh);
+        // Solid Dark Backing Quad
+        const backQuadGeo = new THREE.PlaneGeometry(frameW - 0.08, frameH - 0.08);
+        const backQuadMat = new THREE.MeshBasicMaterial({ color: 0x030712 });
+        const backQuad = new THREE.Mesh(backQuadGeo, backQuadMat);
+        backQuad.position.z = 0.041;
+        boardRoot.add(backQuad);
 
         // Glowing Neon Rails
         const railTopGeo = new THREE.BoxGeometry(frameW - 0.04, 0.022, 0.022);
@@ -568,24 +535,29 @@
         const railL = new THREE.Mesh(railSideGeo, neonMat); railL.position.set(-frameW/2 + 0.02, 0, 0.05); boardRoot.add(railL);
         const railR = new THREE.Mesh(railSideGeo, neonMat); railR.position.set(frameW/2 - 0.02, 0, 0.05); boardRoot.add(railR);
 
-        // High-Resolution 3D Timetable Display Quad
-        const timetableGeo = new THREE.PlaneGeometry(frameW - 0.12, frameH - 0.12);
+        // High-Resolution 3D Timetable Display Quad (100% OPAQUE, SHARP, AND NEVER DISAPPEARS!)
+        const timetableGeo = new THREE.PlaneGeometry(frameW - 0.10, frameH - 0.10);
         const textureLoader = new THREE.TextureLoader();
-        const timetableTex = textureLoader.load('Timetable_College_3D.png');
+        const timetableTex = textureLoader.load('Timetable_College_3D.png', (tex) => {
+            tex.needsUpdate = true;
+            renderer.render(scene, camera);
+        });
         timetableTex.minFilter = THREE.LinearFilter;
         timetableTex.magFilter = THREE.LinearFilter;
 
         const timetableMat = new THREE.MeshBasicMaterial({
             map: timetableTex,
-            transparent: true,
-            side: THREE.DoubleSide
+            transparent: false, // OPAQUE: Fixes the transparency depth issue! Timetable is ALWAYS visible!
+            depthWrite: true,
+            depthTest: true
         });
         const timetableMesh = new THREE.Mesh(timetableGeo, timetableMat);
-        timetableMesh.position.z = 0.038;
+        timetableMesh.position.z = 0.046;
+        timetableMesh.renderOrder = 999;
         boardRoot.add(timetableMesh);
 
         // Animated Laser Scanline on the 3D Board
-        const scanGeo = new THREE.PlaneGeometry(frameW - 0.14, 0.018);
+        const scanGeo = new THREE.PlaneGeometry(frameW - 0.12, 0.016);
         const scanMat = new THREE.MeshBasicMaterial({
             color: 0x38bdf8,
             transparent: true,
@@ -593,10 +565,11 @@
             blending: THREE.AdditiveBlending
         });
         const scanline = new THREE.Mesh(scanGeo, scanMat);
-        scanline.position.z = 0.042;
+        scanline.position.z = 0.050;
         boardRoot.add(scanline);
 
-        // ULTRA-FAST, ROBUST COMPUTER VISION SCANNER
+        // WHOLE-SCREEN REAL-TIME COMPUTER VISION SCANNER
+        // Scans the ENTIRE camera feed (whole screen), not just a box!
         const cvCanvas = document.createElement('canvas');
         cvCanvas.width = 120;
         cvCanvas.height = 80;
@@ -605,19 +578,15 @@
         let consecutiveMatches = 0;
 
         function processCVFrame() {
+            // Only scan when timetable is not yet revealed
             if (isTimetableRevealed || !isCamActive || video.readyState < 2) return;
 
             const vw = video.videoWidth;
             const vh = video.videoHeight;
             if (!vw || !vh) return;
 
-            // Crop center 60% of camera feed
-            const cropW = vw * 0.60;
-            const cropH = cropW * 0.667;
-            const cropX = (vw - cropW) / 2;
-            const cropY = (vh - cropH) / 2;
-
-            cvCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 120, 80);
+            // SCAN THE ENTIRE CAMERA FEED (WHOLE SCREEN!)
+            cvCtx.drawImage(video, 0, 0, vw, vh, 0, 0, 120, 80);
             const frame = cvCtx.getImageData(0, 0, 120, 80);
             const data = frame.data;
             const totalPx = 120 * 80;
@@ -630,23 +599,22 @@
                 const b = data[i + 2];
 
                 // Chromatic Red Purity Formula:
-                // Highly discriminates the red AD2 sign from wood, skin, walls, and paper!
-                // Red must be dominant over green and blue:
+                // Strictly matches the red AD2 sign while ignoring floors, walls, and wood
                 const rgDiff = (r - g) / (r + g + 1.0);
                 const rbDiff = (r - b) / (r + b + 1.0);
 
-                if (r > 70 && rgDiff > 0.32 && rbDiff > 0.26) {
+                if (r > 65 && rgDiff > 0.30 && rbDiff > 0.24) {
                     redSignPixels++;
                 }
             }
 
             const redRatio = redSignPixels / totalPx;
 
-            // ULTRA-FAST TRIGGER: Even 18% red sign in frame triggers instant lock!
-            if (redRatio >= 0.18) {
+            // WHOLE-SCREEN THRESHOLD: If 10% or more of the entire view is the red sign -> INSTANT REVEAL!
+            if (redRatio >= 0.10) {
                 consecutiveMatches++;
                 if (consecutiveMatches >= 2) {
-                    // INSTANTLY UNLOCK AND SHOW TIMETABLE!
+                    // Only camera recognition triggers the timetable!
                     revealTimetable();
                 }
             } else {
@@ -654,32 +622,19 @@
             }
         }
 
-        // Run scanner at 20 FPS for instant response (< 100ms)
+        // Run scanner at 20 FPS for instant detection
         setInterval(processCVFrame, 50);
 
-        // Tap screen anywhere for instant 1-tap trigger fallback
-        window.addEventListener('click', (e) => {
-            if (e.target.closest('button') || e.target.closest('.modal-card')) return;
-            if (!isTimetableRevealed) {
-                revealTimetable();
-            }
-        });
-        window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('button') || e.target.closest('.modal-card')) return;
-            if (!isTimetableRevealed) {
-                revealTimetable();
-            }
-        }, { passive: true });
+        // NOTICE: User screen touching/tapping DOES NOT show timetable!
+        // Timetable is ONLY shown by the camera scanner recognizing the sign.
 
-        // THE KEY FUNCTION:
-        // As requested: "after showing the timetable that scan wali screen shouldnt be visible"
+        // REVEAL TIMETABLE: Hides scan screen completely and displays the 3D timetable
         function revealTimetable() {
             if (isTimetableRevealed) return;
             isTimetableRevealed = true;
 
-            // 1. COMPLETELY HIDE THE SCANNING SCREEN & TOAST!
+            // 1. COMPLETELY HIDE THE SCANNING SCREEN & VIEWING BRACKETS!
             scanScreen.classList.add('hidden');
-            scanToast.classList.add('hidden');
 
             // 2. UPDATE TOP BAR
             camDot.className = 'live-dot active';
@@ -688,8 +643,11 @@
             dayBar.style.display = 'flex';
             timetableBanner.style.display = 'block';
 
-            // 3. SHOW 3D TIMETABLE WITH SMOOTH ANIMATION
+            // 3. SHOW 3D TIMETABLE (ALL DAYS ACTIVE & FULLY VISIBLE)
             boardRoot.visible = true;
+            timetableMesh.visible = true;
+            filterDay('ALL');
+
             boardRoot.scale.set(0.1, 0.1, 0.1);
             animateSpringScale();
             playChirp();
@@ -699,9 +657,8 @@
             isTimetableRevealed = false;
             consecutiveMatches = 0;
 
-            // 1. BRING BACK SCAN SCREEN
+            // 1. BRING BACK FULL-SCREEN SCAN OVERLAY
             scanScreen.classList.remove('hidden');
-            scanToast.classList.remove('hidden');
 
             // 2. RESET TOP BAR
             camDot.className = 'live-dot';
@@ -712,11 +669,6 @@
 
             // 3. HIDE TIMETABLE
             boardRoot.visible = false;
-        }
-
-        function instantUnlockTimetable() {
-            toggleSignModal(false);
-            revealTimetable();
         }
 
         function animateSpringScale() {
@@ -732,19 +684,22 @@
             }, 16);
         }
 
+        // Day Filtering: Timetable is ALWAYS 100% visible in ALL DAYS
         function filterDay(day) {
             document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
             const btn = document.getElementById('tab-' + day);
             if (btn) btn.classList.add('active');
 
+            timetableMesh.visible = true; // ALWAYS GUARANTEE VISIBILITY
+
             if (day === 'ALL') {
                 timetableMesh.scale.set(1.0, 1.0, 1.0);
-                timetableMesh.position.set(0, 0, 0.038);
+                timetableMesh.position.set(0, 0, 0.046);
             } else {
                 const dayIndex = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4 }[day];
                 timetableMesh.scale.set(1.15, 1.15, 1.15);
-                const xOffset = (2 - dayIndex) * 0.32;
-                timetableMesh.position.set(xOffset, 0, 0.045);
+                const xOffset = (2 - dayIndex) * 0.30;
+                timetableMesh.position.set(xOffset, 0, 0.046);
             }
             playChirp();
         }
@@ -768,7 +723,7 @@
             const time = clock.getElapsedTime();
 
             if (boardRoot.visible) {
-                // Gentle floating levitation
+                // Subtle floating levitation
                 boardRoot.position.y = -0.05 + Math.sin(time * 1.8) * 0.025;
 
                 // Pulsing neon emission
