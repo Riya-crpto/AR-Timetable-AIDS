@@ -407,8 +407,7 @@
         <!-- Bottom Controls -->
         <div>
             <div class="bottom-action-bar" id="bottom-bar">
-                <button class="action-pill-btn" onclick="toggleSignModal(true)">🖼️ View Target Sign</button>
-                <button class="action-pill-btn" style="background:#0284c7; color:#fff;" onclick="revealTimetable()">⚡ Show 3D Timetable</button>
+                <button class="action-pill-btn" onclick="toggleSignModal(true)">🖼️ View Target Sign (AD2)</button>
             </div>
 
             <!-- Floating Indicator shown ONLY when timetable is visible -->
@@ -423,11 +422,10 @@
         <div class="modal-card">
             <h2 class="modal-title">🎯 Recognized Target Signboard</h2>
             <p style="font-size:13px; color:#cbd5e1; margin-bottom:12px;">
-                The scanner instantly recognizes <strong>ONLY THIS IMAGE</strong>. Point your camera at this sign:
+                The scanner will show the 3D timetable <strong>ONLY ON THIS EXACT IMAGE</strong>. Point your camera at this sign:
             </p>
-            <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" style="width:100%; border-radius:10px; border:2px solid #dc2626; margin-bottom:12px; display:block;">
-            <button class="modal-btn" onclick="revealTimetable(); toggleSignModal(false);">⚡ Reveal 3D Timetable Now</button>
-            <button class="modal-btn" style="background:rgba(255,255,255,0.1); margin-top:6px;" onclick="toggleSignModal(false)">Close</button>
+            <img src="Target_Sign_AD2.png" alt="Department of AI and Data Science - AD2" style="width:100%; border-radius:10px; border:2px solid #dc2626; margin-bottom:14px; display:block;">
+            <button class="modal-btn" style="background:rgba(255,255,255,0.15);" onclick="toggleSignModal(false)">Close</button>
         </div>
     </div>
 
@@ -602,35 +600,71 @@
             if (isTimetableRevealed) return;
             if (!video.videoWidth || !video.videoHeight) return;
 
+            const w = 120, h = 80;
             // SCAN THE ENTIRE CAMERA FEED (WHOLE SCREEN!)
-            cvCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, 120, 80);
-            const frame = cvCtx.getImageData(0, 0, 120, 80);
+            cvCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, w, h);
+            const frame = cvCtx.getImageData(0, 0, w, h);
             const data = frame.data;
-            const totalPx = 120 * 80;
+            const totalPx = w * h;
 
-            let redSignPixels = 0;
+            let crimsonPixels = 0;
+            let centerWhitePixels = 0;
+            let borderWhitePixels = 0;
 
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
+            const centerLeft = Math.floor(w * 0.15);
+            const centerRight = Math.floor(w * 0.85);
+            const centerTop = Math.floor(h * 0.18);
+            const centerBottom = Math.floor(h * 0.82);
+            const centerTotal = (centerRight - centerLeft) * (centerBottom - centerTop);
+            const borderTotal = totalPx - centerTotal;
 
-                // Robust Crimson Red Detector
-                if (r > 60 && (g / (r + 0.1) < 0.72) && (b / (r + 0.1) < 0.82) && (r - g >= 20)) {
-                    redSignPixels++;
+            for (let y = 0; y < h; y++) {
+                const isCenterY = (y >= centerTop && y < centerBottom);
+                for (let x = 0; x < w; x++) {
+                    const idx = (y * w + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+
+                    // 1. Crimson Red Background Test
+                    const isCrimson = (r > 65) && (g / (r + 0.1) < 0.72) && (b / (r + 0.1) < 0.82) && (r - g >= 20);
+                    if (isCrimson) {
+                        crimsonPixels++;
+                    }
+
+                    // 2. White Text Test
+                    const isWhite = (r > 175) && (g > 175) && (b > 175);
+                    if (isWhite) {
+                        if (isCenterY && (x >= centerLeft && x < centerRight)) {
+                            centerWhitePixels++;
+                        } else {
+                            borderWhitePixels++;
+                        }
+                    }
                 }
             }
 
-            const redRatio = redSignPixels / totalPx;
+            const crimsonRatio = crimsonPixels / totalPx;
+            const centerWhiteRatio = centerWhitePixels / centerTotal;
+            const borderWhiteRatio = borderWhitePixels / borderTotal;
 
-            // Update live debug message
-            if (redRatio > 0.02) {
-                statusSubtext.innerText = 'Analyzing red sign (' + Math.round(redRatio * 100) + '% detected)...';
-            }
+            // STRICT AD2 RECOGNITION RULE:
+            // 1. Must be crimson red sign (covers at least 22% of the screen)
+            // 2. Must contain white text specifically inside the center region (between 2.5% and 25%)
+            // 3. Must have clean red border margins (border white < 3.5%)
+            // This strictly rejects plain red surfaces, red shirts, white paper, and other random images!
+            const isAD2Sign = (crimsonRatio >= 0.22) && 
+                              (centerWhiteRatio >= 0.025) && 
+                              (centerWhiteRatio <= 0.25) && 
+                              (borderWhiteRatio < 0.035);
 
-            // WHOLE-SCREEN THRESHOLD: If 7% or more of the entire view is the red sign -> INSTANT REVEAL!
-            if (redRatio >= 0.07) {
-                revealTimetable();
+            if (isAD2Sign) {
+                consecutiveMatches++;
+                if (consecutiveMatches >= 2) {
+                    revealTimetable();
+                }
+            } else {
+                consecutiveMatches = Math.max(0, consecutiveMatches - 1);
             }
         }
 
