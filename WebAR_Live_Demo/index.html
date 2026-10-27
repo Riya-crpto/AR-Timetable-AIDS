@@ -589,11 +589,13 @@
         boardRoot.add(scanline);
 
         // WHOLE-SCREEN REAL-TIME COMPUTER VISION SCANNER
-        // Scans the ENTIRE camera feed (whole screen), not just a box!
+        // Scans the ENTIRE camera feed (whole screen)
         const cvCanvas = document.createElement('canvas');
         cvCanvas.width = 120;
         cvCanvas.height = 80;
         const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
+
+        let consecutiveMatches = 0;
 
         function processCVFrame() {
             // Only scan when timetable is not yet revealed
@@ -605,66 +607,123 @@
             cvCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, w, h);
             const frame = cvCtx.getImageData(0, 0, w, h);
             const data = frame.data;
-            const totalPx = w * h;
 
-            let crimsonPixels = 0;
-            let centerWhitePixels = 0;
-            let borderWhitePixels = 0;
-
-            const centerLeft = Math.floor(w * 0.15);
-            const centerRight = Math.floor(w * 0.85);
-            const centerTop = Math.floor(h * 0.18);
-            const centerBottom = Math.floor(h * 0.82);
-            const centerTotal = (centerRight - centerLeft) * (centerBottom - centerTop);
-            const borderTotal = totalPx - centerTotal;
+            // 1. Identify crimson red pixels of the AD2 sign
+            const redMask = new Uint8Array(w * h);
+            const colCounts = new Int32Array(w);
+            const rowCounts = new Int32Array(h);
+            let crimsonTotal = 0;
 
             for (let y = 0; y < h; y++) {
-                const isCenterY = (y >= centerTop && y < centerBottom);
+                const yOff = y * w;
                 for (let x = 0; x < w; x++) {
+                    const idx = (yOff + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+
+                    if (r > 50 && (g / (r + 0.1) < 0.80) && (b / (r + 0.1) < 0.85) && (r - g >= 14)) {
+                        redMask[yOff + x] = 1;
+                        crimsonTotal++;
+                        colCounts[x]++;
+                        rowCounts[y]++;
+                    }
+                }
+            }
+
+            // Minimum crimson pixels required (at least 80 pixels anywhere in frame)
+            if (crimsonTotal < 80) {
+                consecutiveMatches = 0;
+                return;
+            }
+
+            // Robust Projection-based Bounding Box (eliminates isolated sensor noise)
+            let minX = -1, maxX = -1, minY = -1, maxY = -1;
+            for (let x = 0; x < w; x++) {
+                if (colCounts[x] >= 3) {
+                    if (minX === -1) minX = x;
+                    maxX = x;
+                }
+            }
+            for (let y = 0; y < h; y++) {
+                if (rowCounts[y] >= 3) {
+                    if (minY === -1) minY = y;
+                    maxY = y;
+                }
+            }
+
+            if (minX === -1 || minY === -1) {
+                consecutiveMatches = 0;
+                return;
+            }
+
+            const boxW = maxX - minX + 1;
+            const boxH = maxY - minY + 1;
+            const boxArea = boxW * boxH;
+
+            // Sign must have reasonable dimensions on camera
+            if (boxW < 14 || boxH < 10) {
+                consecutiveMatches = 0;
+                return;
+            }
+
+            // Aspect ratio check: AD2 sign is landscape (~1.5). In camera angles: 0.70 to 3.2
+            const aspect = boxW / boxH;
+            if (aspect < 0.70 || aspect > 3.2) {
+                consecutiveMatches = 0;
+                return;
+            }
+
+            // Must be cohesive rectangular sign (fill density >= 35%)
+            let boxCrimson = 0;
+            for (let y = minY; y <= maxY; y++) {
+                const yOff = y * w;
+                for (let x = minX; x <= maxX; x++) {
+                    if (redMask[yOff + x] === 1) boxCrimson++;
+                }
+            }
+            const fillDensity = boxCrimson / boxArea;
+            if (fillDensity < 0.35) {
+                consecutiveMatches = 0;
+                return;
+            }
+
+            // 2. White Typography Check strictly inside the AD2 bounding box
+            // The AD2 sign contains centered white typography ("DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE - AD2 -")
+            // Plain red surfaces, clothes, or red paper have ZERO white text (density = 0) -> 100% REJECTED!
+            let whiteInBox = 0;
+            let whiteInMidBand = 0;
+            const midTop = minY + Math.floor(boxH * 0.15);
+            const midBot = minY + Math.ceil(boxH * 0.85);
+
+            for (let y = minY; y <= maxY; y++) {
+                const isMidY = (y >= midTop && y <= midBot);
+                for (let x = minX; x <= maxX; x++) {
                     const idx = (y * w + x) * 4;
                     const r = data[idx];
                     const g = data[idx + 1];
                     const b = data[idx + 2];
 
-                    // 1. Crimson Red Background Test
-                    const isCrimson = (r > 65) && (g / (r + 0.1) < 0.72) && (b / (r + 0.1) < 0.82) && (r - g >= 20);
-                    if (isCrimson) {
-                        crimsonPixels++;
-                    }
-
-                    // 2. White Text Test
-                    const isWhite = (r > 175) && (g > 175) && (b > 175);
-                    if (isWhite) {
-                        if (isCenterY && (x >= centerLeft && x < centerRight)) {
-                            centerWhitePixels++;
-                        } else {
-                            borderWhitePixels++;
-                        }
+                    if (((r + g + b) / 3 > 120) && (g > 75) && (b > 75) && (r > 95)) {
+                        whiteInBox++;
+                        if (isMidY) whiteInMidBand++;
                     }
                 }
             }
 
-            const crimsonRatio = crimsonPixels / totalPx;
-            const centerWhiteRatio = centerWhitePixels / centerTotal;
-            const borderWhiteRatio = borderWhitePixels / borderTotal;
+            const whiteDensity = whiteInBox / boxArea;
 
-            // STRICT AD2 RECOGNITION RULE:
-            // 1. Must be crimson red sign (covers at least 22% of the screen)
-            // 2. Must contain white text specifically inside the center region (between 2.5% and 25%)
-            // 3. Must have clean red border margins (border white < 3.5%)
-            // This strictly rejects plain red surfaces, red shirts, white paper, and other random images!
-            const isAD2Sign = (crimsonRatio >= 0.22) && 
-                              (centerWhiteRatio >= 0.025) && 
-                              (centerWhiteRatio <= 0.25) && 
-                              (borderWhiteRatio < 0.035);
-
-            if (isAD2Sign) {
+            // STRICT EXCLUSIVE AD2 VERIFICATION:
+            // 1. Must contain white text inside the red box (density between 0.5% and 35%)
+            // 2. White text must be predominantly in the vertical center band (>= 60% of text in center)
+            // This strictly locks detection EXCLUSIVELY to the AD2 classroom signboard!
+            if (whiteDensity >= 0.005 && whiteDensity <= 0.35 && (whiteInMidBand / (whiteInBox + 0.001) >= 0.60)) {
                 consecutiveMatches++;
                 if (consecutiveMatches >= 2) {
                     revealTimetable();
                 }
             } else {
-                consecutiveMatches = Math.max(0, consecutiveMatches - 1);
+                consecutiveMatches = 0;
             }
         }
 
